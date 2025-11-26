@@ -896,4 +896,3 @@ app.listen(BOT_PORT, () => {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { sendMessage, initializeWhatsApp, disconnect };
 }
-
