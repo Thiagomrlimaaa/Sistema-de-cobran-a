@@ -111,7 +111,7 @@ Este projeto é privado.
 
 ## 👤 Autor
 
-Luz Rastreamentos
+Thiago Lima
 
 ---
 
