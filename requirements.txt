@@ -14,9 +14,12 @@ python-dotenv==1.0.0
 # HTTP requests (for API calls)
 requests==2.31.0
 
-# Database (if using PostgreSQL in production)
-# psycopg2-binary==2.9.9
+# Database (for PostgreSQL in production)
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
 
 # Static files (for production)
 whitenoise==6.6.0
 
+# Gunicorn (for production server)
+gunicorn==21.2.0

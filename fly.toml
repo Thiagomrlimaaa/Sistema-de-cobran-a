@@ -1,0 +1,38 @@
+# fly.toml app configuration file generated for chatbot-cobrana-silent-feather-3785 on 2025-11-26T15:40:31-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'chatbot-cobrana-silent-feather-3785'
+primary_region = 'gru'
+console_command = '/code/manage.py shell'
+
+[build]
+
+[deploy]
+  release_command = 'python manage.py migrate --noinput'
+
+[env]
+  PORT = '8000'
+
+[processes]
+  app = 'gunicorn --bind :8000 --workers 2 cobranca_chatbot.wsgi'
+  # Celery desabilitado temporariamente - requer Redis configurado
+  # celery = 'celery -A cobranca_chatbot.celery worker --loglevel=INFO'
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[[statics]]
+  guest_path = '/code/static'
+  url_prefix = '/static/'
