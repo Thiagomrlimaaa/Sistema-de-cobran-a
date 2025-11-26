@@ -1,0 +1,191 @@
+================================================================================
+  GUIA COMPLETO - SUBIR APLICAÇÃO PARA GITHUB
+  Chatbot de Cobrança - Luz Rastreamentos
+================================================================================
+
+PASSO 1: INSTALAR GIT (SE NÃO TIVER)
+-------------------------------------
+1. Baixe o Git: https://git-scm.com/download/win
+2. Instale com as opções padrão
+3. Reinicie o terminal/PowerShell após instalar
+
+VERIFICAR SE GIT ESTÁ INSTALADO:
+---------------------------------
+Abra PowerShell ou CMD e digite:
+  git --version
+
+Se aparecer a versão, está instalado. Se não, instale primeiro.
+
+PASSO 2: CRIAR CONTA NO GITHUB (SE NÃO TIVER)
+----------------------------------------------
+1. Acesse: https://github.com
+2. Clique em "Sign up"
+3. Crie sua conta (é gratuito)
+4. Confirme o email
+
+PASSO 3: CRIAR REPOSITÓRIO NO GITHUB
+-------------------------------------
+1. Faça login no GitHub
+2. Clique no ícone "+" no canto superior direito
+3. Clique em "New repository"
+4. Preencha:
+   - Repository name: chatbot-cobranca (ou outro nome)
+   - Description: Sistema de cobrança via WhatsApp com Django e WPPConnect
+   - Visibility: Public (ou Private se quiser privado)
+   - NÃO marque "Initialize with README" (vamos fazer isso depois)
+5. Clique em "Create repository"
+
+PASSO 4: INICIALIZAR GIT NO PROJETO
+-------------------------------------
+Abra PowerShell ou CMD na pasta do projeto:
+  cd "C:\Users\AVELL\Documents\chatbot - cobrança"
+
+Execute estes comandos:
+
+# Inicializar repositório Git
+git init
+
+# Adicionar todos os arquivos
+git add .
+
+# Fazer primeiro commit
+git commit -m "Initial commit: Sistema de cobrança via WhatsApp"
+
+PASSO 5: CONECTAR COM GITHUB
+------------------------------
+No GitHub, após criar o repositório, você verá instruções.
+Execute estes comandos (SUBSTITUA SEU_USUARIO pelo seu usuário do GitHub):
+
+git remote add origin https://github.com/SEU_USUARIO/chatbot-cobranca.git
+
+# OU se preferir usar SSH (mais seguro):
+# git remote add origin git@github.com:SEU_USUARIO/chatbot-cobranca.git
+
+PASSO 6: ENVIAR PARA GITHUB
+-----------------------------
+git branch -M main
+git push -u origin main
+
+Se pedir login:
+- Username: seu usuário do GitHub
+- Password: use um Personal Access Token (não a senha normal)
+
+COMO CRIAR PERSONAL ACCESS TOKEN:
+----------------------------------
+1. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Generate new token (classic)
+3. Dê um nome (ex: "chatbot-cobranca")
+4. Marque: repo (todas as opções)
+5. Generate token
+6. COPIE o token (você não verá novamente!)
+7. Use este token como senha quando o Git pedir
+
+PASSO 7: VERIFICAR
+------------------
+1. Acesse seu repositório no GitHub
+2. Você deve ver todos os arquivos lá
+
+================================================================================
+  COMANDOS COMPLETOS (COPIE E COLE)
+================================================================================
+
+# 1. Navegar para a pasta do projeto
+cd "C:\Users\AVELL\Documents\chatbot - cobrança"
+
+# 2. Inicializar Git
+git init
+
+# 3. Adicionar arquivo .gitignore (já criado)
+git add .gitignore
+
+# 4. Adicionar todos os arquivos
+git add .
+
+# 5. Fazer commit
+git commit -m "Initial commit: Sistema de cobrança via WhatsApp"
+
+# 6. Conectar com GitHub (SUBSTITUA SEU_USUARIO)
+git remote add origin https://github.com/SEU_USUARIO/chatbot-cobranca.git
+
+# 7. Renomear branch para main
+git branch -M main
+
+# 8. Enviar para GitHub
+git push -u origin main
+
+================================================================================
+  ATUALIZAR REPOSITÓRIO (QUANDO FIZER MUDANÇAS)
+================================================================================
+
+Depois de fazer alterações no código:
+
+# 1. Ver o que mudou
+git status
+
+# 2. Adicionar arquivos modificados
+git add .
+
+# 3. Fazer commit
+git commit -m "Descrição das mudanças"
+
+# 4. Enviar para GitHub
+git push
+
+================================================================================
+  ARQUIVOS QUE NÃO SERÃO ENVIADOS (por segurança)
+================================================================================
+
+O arquivo .gitignore já está configurado para NÃO enviar:
+- Arquivos .env (com senhas e chaves)
+- node_modules/ (dependências do Node.js)
+- venv/ (ambiente virtual Python)
+- Arquivos de sessão do WhatsApp
+- Banco de dados SQLite
+- Logs
+
+IMPORTANTE: Crie um arquivo .env.example com as variáveis (sem valores):
+- .env.example será enviado
+- .env NÃO será enviado
+
+================================================================================
+  CRIAR ARQUIVO .env.example
+================================================================================
+
+Crie um arquivo chamado .env.example na raiz do projeto com:
+
+DJANGO_SECRET_KEY=your-secret-key-here
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+WPPCONNECT_BOT_URL=http://localhost:3001
+DJANGO_API_URL=http://localhost:8000/api
+
+E na pasta cobranca-bot/.env.example:
+
+DJANGO_API_URL=http://localhost:8000/api
+WHATSAPP_SESSION=cobranca
+BOT_PORT=3001
+
+Assim outras pessoas saberão quais variáveis precisam configurar.
+
+================================================================================
+  TROUBLESHOOTING
+================================================================================
+
+ERRO: "git não é reconhecido"
+- Instale o Git: https://git-scm.com/download/win
+- Reinicie o terminal
+
+ERRO: "Permission denied" ao fazer push
+- Verifique se está usando Personal Access Token (não senha)
+- Verifique se o token tem permissão "repo"
+
+ERRO: "remote origin already exists"
+- Execute: git remote remove origin
+- Depois: git remote add origin https://github.com/SEU_USUARIO/chatbot-cobranca.git
+
+ERRO: "failed to push some refs"
+- Execute: git pull origin main --allow-unrelated-histories
+- Depois: git push -u origin main
+
+================================================================================
+

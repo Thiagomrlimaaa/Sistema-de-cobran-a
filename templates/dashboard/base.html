@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Painel Administrativo{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'ui-sans-serif', 'system-ui'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fff3e9',
+                            100: '#ffe1cb',
+                            200: '#ffc29d',
+                            300: '#ffa066',
+                            400: '#ff7d36',
+                            500: '#f26522',
+                            600: '#d4571d',
+                            700: '#a94217',
+                            800: '#7d3112',
+                            900: '#5f250d',
+                        },
+                        accent: {
+                            50: '#e6eeff',
+                            100: '#c0d4ff',
+                            200: '#8fb4ff',
+                            300: '#5e93ff',
+                            400: '#2d72ff',
+                            500: '#0f57e6',
+                            600: '#0b42b4',
+                            700: '#083081',
+                            800: '#051d4f',
+                            900: '#030f29',
+                        },
+                    },
+                    boxShadow: {
+                        soft: '0 30px 60px -15px rgba(15, 87, 230, 0.18)',
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        .dashboard-bg-logo {
+            background-image: url("{% static 'logo-luz.jpeg' %}");
+            background-repeat: no-repeat;
+            background-position: center calc(50% + 320px);
+            background-size: cover;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-accent-900 via-slate-900 to-accent-600/90 font-sans text-slate-900">
+<div class="relative overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,125,54,0.25),_transparent_55%)]"></div>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-800/60 via-slate-800/20 to-transparent"></div>
+    <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div class="h-[140vh] w-[130vw] opacity-[0.06] dashboard-bg-logo"></div>
+    </div>
+    <nav class="relative border-b border-white/10 bg-gradient-to-r from-brand-500 via-brand-600 to-accent-600 shadow-2xl shadow-brand-900/40">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+            <div class="flex items-center space-x-10">
+                <a href="{% url 'dashboard:home' %}" class="text-2xl font-bold text-white drop-shadow">
+                    LUZ Rastreamento • Painel
+                </a>
+                <div class="hidden items-center space-x-6 text-sm font-medium text-white/80 md:flex">
+                    <a href="{% url 'dashboard:home' %}"
+                       class="rounded-full px-4 py-1 transition {% if request.resolver_match.url_name == 'home' %}bg-white/15 text-white{% else %}hover:bg-white/10 hover:text-white{% endif %}">
+                        Resumo
+                    </a>
+                    <a href="{% url 'dashboard:clients' %}"
+                       class="rounded-full px-4 py-1 transition {% if 'client' in request.resolver_match.url_name %}bg-white/15 text-white{% else %}hover:bg-white/10 hover:text-white{% endif %}">
+                        Clientes
+                    </a>
+                    <a href="{% url 'dashboard:bot-control' %}"
+                       class="rounded-full px-4 py-1 transition {% if request.resolver_match.url_name == 'bot-control' %}bg-white/15 text-white{% else %}hover:bg-white/10 hover:text-white{% endif %}">
+                        WhatsApp Bot
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 text-sm font-medium text-white">
+                {% if request.user.is_authenticated %}
+                    <span class="hidden text-white/80 md:inline">
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </span>
+                    <a href="{% url 'logout' %}?next={{ request.path }}"
+                       class="rounded-full border border-white/40 px-4 py-2 text-white transition hover:bg-white hover:text-brand-600">
+                        Sair
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}"
+                       class="rounded-full border border-white/40 px-4 py-2 text-white transition hover:bg-white hover:text-brand-600">
+                        Entrar
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative mx-auto mt-10 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <div class="space-y-4">
+            {% for message in messages %}
+                <div class="rounded-2xl border border-white/30 bg-white/90 p-5 backdrop-blur shadow-soft {% if message.tags == 'success' %}shadow-green-500/30{% elif message.tags == 'error' %}shadow-red-500/30{% else %}shadow-brand-500/30{% endif %}">
+                    <p class="text-sm font-medium text-slate-800">{{ message }}</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+</body>
+</html>
+
+

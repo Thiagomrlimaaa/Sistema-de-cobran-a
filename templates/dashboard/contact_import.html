@@ -1,0 +1,48 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Importar contatos - Painel{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-3xl">
+    <div class="overflow-hidden rounded-3xl bg-white/95 p-10 shadow-soft ring-1 ring-white/40 backdrop-blur">
+        <header class="mb-8 space-y-2">
+            <h1 class="text-3xl font-semibold text-slate-900">Importar contatos via CSV</h1>
+            <p class="text-sm text-slate-500">
+                Estrutura esperada:
+                <code class="rounded bg-brand-50 px-2 py-1 text-xs text-brand-700">name, phone, monthly_fee, due_date, email, payment_link, status</code>.
+                Datas podem estar em <strong>DD/MM/AAAA</strong> ou <strong>AAAA-MM-DD</strong>.
+            </p>
+        </header>
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-600" for="{{ form.file.id_for_label }}">
+                    Arquivo CSV
+                </label>
+                {{ form.file }}
+                {% if form.file.errors %}
+                    <p class="mt-1 text-xs font-semibold text-brand-600">
+                        {% for error in form.file.errors %}{{ error }}{% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+            {% if form.non_field_errors %}
+                <div class="rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm font-medium text-brand-700">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+            <div class="flex flex-col gap-3 sm:flex-row">
+                <button type="submit"
+                        class="inline-flex items-center justify-center rounded-2xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600">
+                    Importar
+                </button>
+                <a href="{% url 'dashboard:clients' %}"
+                   class="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+

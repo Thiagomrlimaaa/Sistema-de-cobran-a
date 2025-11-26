@@ -1,0 +1,200 @@
+================================================================================
+  PRÓXIMOS PASSOS - APÓS CRIAR A INSTÂNCIA
+================================================================================
+
+PASSO 1: ANOTAR INFORMAÇÕES DA INSTÂNCIA
+------------------------------------------
+1. No painel do Oracle Cloud, vá em "Compute" → "Instances"
+2. Clique na sua instância
+3. ANOTE estas informações:
+   - Public IP: _______________________
+   - Private IP: ______________________
+   - OCID: ____________________________
+
+PASSO 2: CONFIGURAR FIREWALL (ABRIR PORTAS)
+--------------------------------------------
+IMPORTANTE: Sem isso, você não conseguirá acessar o sistema de fora!
+
+1. No menu, vá em "Networking" → "Virtual Cloud Networks"
+2. Clique na VCN (rede virtual) criada automaticamente
+3. Clique em "Security Lists" → Clique na lista padrão
+4. Clique em "Add Ingress Rules"
+5. Adicione estas 2 regras:
+
+   REGRA 1 - Django (Porta 8000):
+   - Source Type: CIDR
+   - Source CIDR: 0.0.0.0/0
+   - IP Protocol: TCP
+   - Destination Port Range: 8000
+   - Description: Django Server
+   - Clique em "Add Ingress Rules"
+
+   REGRA 2 - Bot WhatsApp (Porta 3001):
+   - Source Type: CIDR
+   - Source CIDR: 0.0.0.0/0
+   - IP Protocol: TCP
+   - Destination Port Range: 3001
+   - Description: WhatsApp Bot
+   - Clique em "Add Ingress Rules"
+
+PASSO 3: BAIXAR OU CRIAR CHAVE SSH
+-----------------------------------
+OPÇÃO A - Se você baixou a chave quando criou a instância:
+- Você já tem o arquivo .key
+- Guarde em local seguro (ex: C:\Users\AVELL\.ssh\)
+
+OPÇÃO B - Se não baixou, criar nova chave:
+1. No painel, vá em "Compute" → "Instances"
+2. Clique na sua instância
+3. Clique em "Edit"
+4. Em "Add SSH Keys", clique em "Save Private Key"
+5. Baixe o arquivo .key
+
+PASSO 4: CONECTAR AO SERVIDOR VIA SSH
+--------------------------------------
+WINDOWS (PowerShell ou CMD):
+
+1. Abra PowerShell ou CMD
+2. Navegue até a pasta onde está a chave:
+   cd C:\Users\AVELL\.ssh
+   (ou onde você salvou a chave)
+
+3. Conecte usando:
+   ssh -i nome-da-chave.key ubuntu@SEU_IP_PUBLICO
+
+   Exemplo:
+   ssh -i oracle-cloud.key ubuntu@129.146.xxx.xxx
+
+4. Se aparecer mensagem sobre "permissions", execute:
+   icacls nome-da-chave.key /inheritance:r
+   icacls nome-da-chave.key /grant:r "%username%:R"
+
+5. Na primeira conexão, digite "yes" quando perguntar
+
+PASSO 5: EXECUTAR SCRIPT DE CONFIGURAÇÃO
+-----------------------------------------
+Após conectar via SSH, execute:
+
+1. Fazer upload do script setup_oracle_cloud.sh para o servidor:
+   (No seu computador Windows, abra outro terminal)
+   
+   scp -i chave.key setup_oracle_cloud.sh ubuntu@IP_DO_SERVIDOR:~/
+
+2. No servidor (via SSH), tornar executável e rodar:
+   chmod +x setup_oracle_cloud.sh
+   ./setup_oracle_cloud.sh
+
+   OU execute os comandos manualmente (veja GUIA_ORACLE_CLOUD.txt)
+
+PASSO 6: FAZER UPLOAD DO PROJETO
+---------------------------------
+OPÇÃO A - Se está no GitHub:
+   cd ~/projetos
+   git clone https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
+   cd chatbot-cobranca
+
+OPÇÃO B - Se não está no GitHub (upload manual):
+   (No seu computador Windows)
+   
+   # Instalar WinSCP ou usar SCP via PowerShell
+   # Com PowerShell:
+   
+   scp -i chave.key -r "C:\Users\AVELL\Documents\chatbot - cobrança\*" ubuntu@IP_DO_SERVIDOR:~/projetos/chatbot-cobranca/
+
+   OU use WinSCP (interface gráfica mais fácil)
+
+PASSO 7: CONFIGURAR DJANGO
+---------------------------
+cd ~/projetos/chatbot-cobranca
+
+# Criar ambiente virtual
+python3.11 -m venv venv
+source venv/bin/activate
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Criar arquivo .env
+nano .env
+
+# Cole estas linhas (AJUSTE O IP):
+DJANGO_SECRET_KEY=GERE-UM-SECRET-KEY-ALEATORIO-AQUI
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=SEU_IP_PUBLICO
+WPPCONNECT_BOT_URL=http://SEU_IP_PUBLICO:3001
+DJANGO_API_URL=http://SEU_IP_PUBLICO:8000/api
+
+# Para gerar SECRET_KEY, execute:
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+# Salvar: Ctrl+O, Enter, Ctrl+X
+
+# Aplicar migrations
+python manage.py migrate
+
+# Criar superusuário
+python manage.py createsuperuser
+
+PASSO 8: CONFIGURAR BOT
+------------------------
+cd ~/projetos/chatbot-cobranca/cobranca-bot
+
+# Instalar dependências
+npm install
+
+# Criar arquivo .env
+nano .env
+
+# Cole estas linhas (AJUSTE O IP):
+DJANGO_API_URL=http://SEU_IP_PUBLICO:8000/api
+WHATSAPP_SESSION=cobranca
+BOT_PORT=3001
+
+# Salvar: Ctrl+O, Enter, Ctrl+X
+
+PASSO 9: INICIAR SERVIÇOS COM PM2
+----------------------------------
+# Iniciar Django
+cd ~/projetos/chatbot-cobranca
+source venv/bin/activate
+pm2 start "python manage.py runserver 0.0.0.0:8000" --name django --interpreter python3.11
+
+# Iniciar Bot
+cd ~/projetos/chatbot-cobranca/cobranca-bot
+pm2 start "npm start" --name whatsapp-bot
+
+# Salvar configuração
+pm2 save
+
+# Configurar para iniciar automaticamente
+pm2 startup
+# Copie e execute o comando que aparecer
+
+# Ver status
+pm2 status
+
+PASSO 10: TESTAR
+-----------------
+1. Abra navegador e acesse: http://SEU_IP_PUBLICO:8000
+2. Faça login com o superusuário criado
+3. Vá em "WhatsApp Bot" → "Iniciar Bot"
+4. Escaneie o QR Code
+
+================================================================================
+  CHECKLIST
+================================================================================
+[ ] Instância criada
+[ ] IP público anotado
+[ ] Portas 8000 e 3001 abertas no firewall
+[ ] Chave SSH baixada/salva
+[ ] Conectado via SSH
+[ ] Script de configuração executado (ou dependências instaladas manualmente)
+[ ] Projeto enviado para o servidor
+[ ] Django configurado (.env criado, migrations aplicadas)
+[ ] Bot configurado (.env criado, npm install)
+[ ] Serviços iniciados com PM2
+[ ] Sistema acessível via navegador
+[ ] QR Code aparecendo no dashboard
+
+================================================================================
+

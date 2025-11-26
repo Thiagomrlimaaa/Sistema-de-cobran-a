@@ -1,0 +1,237 @@
+================================================================================
+  GUIA PRÁTICO - CONFIGURAR NO ORACLE CLOUD FREE TIER
+  Chatbot de Cobrança - Luz Rastreamentos
+================================================================================
+
+PASSO 1: CRIAR CONTA NO ORACLE CLOUD
+-------------------------------------
+1. Acesse: https://www.oracle.com/cloud/free/
+2. Clique em "Start for Free"
+3. Preencha os dados (nome, email, telefone)
+4. IMPORTANTE: Vai pedir cartão de crédito
+   - Não vai cobrar se usar apenas recursos "Always Free"
+   - É só para verificação
+5. Escolha região: São Paulo (sa-saopaulo-1) ou Ashburn (us-ashburn-1)
+6. Confirme o email
+
+PASSO 2: CRIAR VM (SERVIDOR)
+-----------------------------
+1. Faça login no Oracle Cloud Console
+2. Vá em "Menu" (☰) → "Compute" → "Instances"
+3. Clique em "Create Instance"
+
+CONFIGURAÇÕES DA VM:
+- Name: chatbot-cobranca (ou qualquer nome)
+- Image: Ubuntu 22.04 (Always Free Eligible)
+- Shape: VM.Standard.E2.1.Micro (SEMPRE escolha este - é o gratuito)
+- Networking: Deixe padrão
+- SSH Keys: 
+  * Se você tem chave SSH: Cole sua chave pública
+  * Se não tem: Clique em "Save Private Key" e baixe o arquivo .key
+
+4. Clique em "Create"
+5. Aguarde 2-3 minutos para criar
+
+PASSO 3: CONFIGURAR FIREWALL (ABRIR PORTAS)
+--------------------------------------------
+1. Vá em "Menu" → "Networking" → "Virtual Cloud Networks"
+2. Clique na VCN criada automaticamente
+3. Vá em "Security Lists" → Clique na lista padrão
+4. Clique em "Add Ingress Rules"
+5. Adicione 2 regras:
+
+REGRA 1 - Django (Porta 8000):
+- Source Type: CIDR
+- Source CIDR: 0.0.0.0/0
+- IP Protocol: TCP
+- Destination Port Range: 8000
+- Description: Django Server
+
+REGRA 2 - Bot WhatsApp (Porta 3001):
+- Source Type: CIDR
+- Source CIDR: 0.0.0.0/0
+- Destination Port Range: 3001
+- Description: WhatsApp Bot
+
+6. Clique em "Add Ingress Rules" para cada uma
+
+PASSO 4: CONECTAR AO SERVIDOR VIA SSH
+--------------------------------------
+WINDOWS:
+1. Abra PowerShell ou CMD
+2. Se você baixou a chave .key do Oracle:
+   - Converta para .pem (se necessário)
+   - Use: ssh -i caminho/para/chave.key ubuntu@IP_DO_SERVIDOR
+3. O IP está na página da VM (Public IP)
+
+LINUX/MAC:
+ssh -i caminho/para/chave.key ubuntu@IP_DO_SERVIDOR
+
+PASSO 5: INSTALAR DEPENDÊNCIAS NO SERVIDOR
+-------------------------------------------
+Execute estes comandos um por um:
+
+# Atualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar Python 3.11
+sudo apt install python3.11 python3.11-venv python3-pip git -y
+
+# Instalar Node.js 18
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verificar instalações
+python3.11 --version
+node --version
+npm --version
+
+PASSO 6: BAIXAR E CONFIGURAR O PROJETO
+---------------------------------------
+# Criar diretório
+mkdir -p ~/projetos
+cd ~/projetos
+
+# Se seu projeto está no GitHub:
+git clone https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
+cd chatbot-cobranca
+
+# OU se não está no GitHub, você pode fazer upload via SCP:
+# (No seu computador Windows)
+# scp -i chave.key -r "C:\Users\AVELL\Documents\chatbot - cobrança" ubuntu@IP_DO_SERVIDOR:~/projetos/
+
+PASSO 7: CONFIGURAR DJANGO
+---------------------------
+cd ~/projetos/chatbot-cobranca
+
+# Criar ambiente virtual
+python3.11 -m venv venv
+source venv/bin/activate
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Configurar variáveis de ambiente
+nano .env
+
+# Cole estas linhas (ajuste os valores):
+DJANGO_SECRET_KEY=sua-chave-secreta-aqui-gerada-aleatoriamente
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=IP_DO_SERVIDOR,seu-dominio.com
+WPPCONNECT_BOT_URL=http://IP_DO_SERVIDOR:3001
+DJANGO_API_URL=http://IP_DO_SERVIDOR:8000/api
+
+# Salvar: Ctrl+O, Enter, Ctrl+X
+
+# Aplicar migrations
+python manage.py migrate
+
+# Criar superusuário (opcional)
+python manage.py createsuperuser
+
+PASSO 8: CONFIGURAR BOT WHATSAPP
+---------------------------------
+cd ~/projetos/chatbot-cobranca/cobranca-bot
+
+# Instalar dependências
+npm install
+
+# Configurar .env
+nano .env
+
+# Cole estas linhas:
+DJANGO_API_URL=http://IP_DO_SERVIDOR:8000/api
+WHATSAPP_SESSION=cobranca
+BOT_PORT=3001
+
+# Salvar: Ctrl+O, Enter, Ctrl+X
+
+PASSO 9: INSTALAR PM2 (PARA MANTER RODANDO)
+--------------------------------------------
+# Instalar PM2 globalmente
+sudo npm install -g pm2
+
+# Iniciar Django
+cd ~/projetos/chatbot-cobranca
+source venv/bin/activate
+pm2 start "python manage.py runserver 0.0.0.0:8000" --name django --interpreter python3.11
+
+# Iniciar Bot
+cd ~/projetos/chatbot-cobranca/cobranca-bot
+pm2 start "npm start" --name whatsapp-bot
+
+# Salvar configuração
+pm2 save
+
+# Configurar para iniciar automaticamente ao reiniciar servidor
+pm2 startup
+# Copie e execute o comando que aparecer (será algo como: sudo env PATH=...)
+
+# Ver status
+pm2 status
+
+# Ver logs
+pm2 logs django
+pm2 logs whatsapp-bot
+
+PASSO 10: TESTAR
+-----------------
+1. Acesse no navegador: http://IP_DO_SERVIDOR:8000
+2. Faça login
+3. Vá em "WhatsApp Bot" → "Iniciar Bot"
+4. Escaneie o QR Code
+
+COMANDOS ÚTEIS PM2
+-------------------
+pm2 status              - Ver status dos processos
+pm2 logs               - Ver logs de todos
+pm2 logs django        - Ver logs do Django
+pm2 logs whatsapp-bot  - Ver logs do Bot
+pm2 restart all        - Reiniciar tudo
+pm2 stop all           - Parar tudo
+pm2 start all          - Iniciar tudo
+pm2 delete all         - Deletar tudo
+
+ATUALIZAR O PROJETO
+-------------------
+# Se está no GitHub:
+cd ~/projetos/chatbot-cobranca
+git pull
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+pm2 restart django
+
+cd ~/projetos/chatbot-cobranca/cobranca-bot
+npm install
+pm2 restart whatsapp-bot
+
+PROBLEMAS COMUNS
+----------------
+1. Não consegue conectar via SSH:
+   - Verifique se o IP está correto
+   - Verifique se a chave SSH está correta
+   - Verifique Security List (firewall)
+
+2. Django não acessa de fora:
+   - Verifique se a porta 8000 está aberta no Security List
+   - Verifique ALLOWED_HOSTS no .env
+
+3. Bot não conecta:
+   - Verifique se o bot está rodando: pm2 logs whatsapp-bot
+   - Verifique se a porta 3001 está aberta
+   - Verifique DJANGO_API_URL no .env do bot
+
+4. Serviços param de funcionar:
+   - Verifique: pm2 status
+   - Reinicie: pm2 restart all
+
+IMPORTANTE
+----------
+- Sempre use recursos "Always Free Eligible"
+- Monitore o uso no painel do Oracle Cloud
+- Configure alertas de uso para não exceder limites
+- Faça backup regular do banco de dados
+
+================================================================================
+

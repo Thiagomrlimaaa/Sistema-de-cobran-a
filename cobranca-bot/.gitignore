@@ -1,0 +1,31 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# WPPConnect / WhatsApp
+.wppconnect/
+.wppconnect-session/
+*.session
+*.data.json
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.*.local
+
+# Arquivos temporários
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Logs
+*.log
+logs/
+
+# QR Codes
+qr_code_*.png
+qr_code_*.jpg
+

@@ -1,0 +1,152 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Clientes - Painel Administrativo{% endblock %}
+
+{% block content %}
+<header class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+        <h1 class="text-3xl font-semibold text-white drop-shadow">Clientes</h1>
+        <p class="text-sm text-white/80">Gerencie a base de clientes, dados de cobrança e envios rápidos.</p>
+    </div>
+    <div class="flex flex-col gap-2 sm:flex-row">
+        <a href="{% url 'dashboard:client-import' %}"
+           class="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:border-white/50 hover:bg-white/20">
+            Importar CSV
+        </a>
+        <a href="{% url 'dashboard:client-create' %}"
+           class="inline-flex items-center justify-center rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600">
+            Novo cliente
+        </a>
+    </div>
+</header>
+
+<form method="get" class="grid gap-4 rounded-3xl bg-white/95 p-5 shadow-soft ring-1 ring-white/30 backdrop-blur md:grid-cols-4">
+    <div class="md:col-span-2">
+        <label class="text-sm font-semibold text-slate-600" for="search-input">Busca</label>
+        <input id="search-input" type="search" name="q" value="{{ current_query }}"
+               class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+               placeholder="Nome, telefone ou e-mail">
+    </div>
+    <div>
+        <label class="text-sm font-semibold text-slate-600" for="status-select">Status</label>
+        <select id="status-select" name="status"
+                class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+            <option value="">Todos</option>
+            {% for value, label in statuses %}
+                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="flex items-end">
+        <button type="submit"
+                class="inline-flex w-full items-center justify-center rounded-xl bg-accent-600 px-4 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-accent-700">
+            Filtrar
+        </button>
+    </div>
+</form>
+
+<div class="mt-8 overflow-hidden rounded-3xl bg-white/95 shadow-soft ring-1 ring-white/30 backdrop-blur">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-100 text-sm">
+            <thead class="bg-gradient-to-r from-accent-900 via-accent-800 to-accent-900 text-xs font-semibold uppercase tracking-[0.3em] text-white/80">
+            <tr>
+                <th scope="col" class="px-5 py-4 text-left">Nome</th>
+                <th scope="col" class="px-5 py-4 text-left">Telefone</th>
+                <th scope="col" class="px-5 py-4 text-left">Mensalidade</th>
+                <th scope="col" class="px-5 py-4 text-left">Vencimento</th>
+                <th scope="col" class="px-5 py-4 text-left">Status</th>
+                <th scope="col" class="px-5 py-4 text-right">Ações</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+            {% for client in clients %}
+                <tr class="transition hover:bg-brand-50/70">
+                    <td class="px-5 py-4 font-medium text-slate-800">{{ client.name }}</td>
+                    <td class="px-5 py-4 text-slate-600">{{ client.phone }}</td>
+                    <td class="px-5 py-4 text-slate-600">R$ {{ client.monthly_fee|floatformat:2 }}</td>
+                    <td class="px-5 py-4 text-slate-600">{{ client.due_date|date:"d/m/Y" }}</td>
+                    <td class="px-4 py-3">
+                        {% if client.status == "active" %}
+                            <span class="inline-flex rounded-full bg-accent-50 px-3 py-1 text-xs font-semibold text-accent-600">Ativo</span>
+                        {% elif client.status == "delinquent" %}
+                            <span class="inline-flex rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-600">Inadimplente</span>
+                        {% else %}
+                            <span class="inline-flex rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">Quitado</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <form method="post" action="{% url 'dashboard:client-send-message' %}" class="flex items-center gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="client_id" value="{{ client.id }}">
+                                <select name="template_code"
+                                        class="hidden md:block w-40 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+                                    {% for template in templates %}
+                                        <option value="{{ template.code }}">{{ template.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit"
+                                        class="inline-flex items-center justify-center rounded-xl border border-accent-400 px-3 py-2 text-xs font-semibold text-accent-600 transition hover:bg-accent-50">
+                                    Enviar
+                                </button>
+                            </form>
+                            <a href="{% url 'dashboard:client-update' client.pk %}"
+                               class="inline-flex items-center justify-center rounded-xl border border-white/60 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+                                Editar
+                            </a>
+                            <a href="{% url 'dashboard:client-delete' client.pk %}"
+                               class="inline-flex items-center justify-center rounded-xl border border-brand-200 px-3 py-2 text-xs font-semibold text-brand-600 transition hover:bg-brand-50">
+                                Excluir
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="px-5 py-8 text-center text-sm text-slate-500">
+                        Nenhum cliente encontrado.
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+    <nav class="mt-8 flex justify-end">
+        <ul class="inline-flex items-center gap-2 text-xs font-semibold text-white/80">
+            {% if page_obj.has_previous %}
+                <li>
+                    <a class="rounded-xl border border-white/30 px-3 py-1 transition hover:bg-white/20"
+                       href="?page={{ page_obj.previous_page_number }}&q={{ current_query }}&status={{ current_status }}">
+                        Anterior
+                    </a>
+                </li>
+            {% else %}
+                <li>
+                    <span class="rounded-xl border border-white/20 px-3 py-1 text-white/30">Anterior</span>
+                </li>
+            {% endif %}
+            <li>
+                <span class="rounded-xl border border-white/20 px-3 py-1">
+                    Página {{ page_obj.number }} de {{ paginator.num_pages }}
+                </span>
+            </li>
+            {% if page_obj.has_next %}
+                <li>
+                    <a class="rounded-xl border border-white/30 px-3 py-1 transition hover:bg-white/20"
+                       href="?page={{ page_obj.next_page_number }}&q={{ current_query }}&status={{ current_status }}">
+                        Próxima
+                    </a>
+                </li>
+            {% else %}
+                <li>
+                    <span class="rounded-xl border border-white/20 px-3 py-1 text-white/30">Próxima</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,831 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Controle do Bot WhatsApp - Painel Administrativo{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Status do Bot -->
+    <section class="rounded-3xl bg-white/95 p-6 shadow-soft ring-1 ring-white/40 backdrop-blur">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-slate-900">Status do Bot WhatsApp</h2>
+            <div id="status-indicator" class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-full bg-gray-400 animate-pulse"></span>
+                <span class="text-sm text-slate-600">Verificando...</span>
+            </div>
+        </div>
+        
+        <!-- Alerta quando bot não está rodando -->
+        <div id="bot-offline-alert" class="mt-4 hidden rounded-xl bg-yellow-50 border border-yellow-200 p-4">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-semibold text-yellow-800">Bot não está rodando</h3>
+                    <p class="mt-1 text-sm text-yellow-700">
+                        Para usar o bot, você precisa iniciar o servidor Node.js primeiro.
+                    </p>
+                    <div class="mt-3">
+                        <p class="text-xs font-medium text-yellow-800 mb-2">Como iniciar:</p>
+                        <ol class="list-decimal list-inside text-xs text-yellow-700 space-y-1">
+                            <li>Abra um terminal na pasta do projeto</li>
+                            <li>Execute: <code class="bg-yellow-100 px-1 rounded">cd cobranca-bot</code></li>
+                            <li>Execute: <code class="bg-yellow-100 px-1 rounded">npm start</code></li>
+                            <li>Ou use o arquivo <code class="bg-yellow-100 px-1 rounded">start_bot.bat</code> na raiz do projeto</li>
+                        </ol>
+                        <p class="mt-2 text-xs text-yellow-700">
+                            <strong>Importante:</strong> Mantenha o terminal aberto enquanto usar o bot!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 flex gap-4">
+            <button id="btn-start" onclick="startBot()" 
+                    class="rounded-xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                Iniciar Bot
+            </button>
+            <button id="btn-stop" onclick="stopBot()" 
+                    class="rounded-xl bg-red-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                Parar Bot
+            </button>
+            <button onclick="checkStatus()" 
+                    class="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                Atualizar Status
+            </button>
+        </div>
+    </section>
+
+    <!-- QR Code -->
+    <section id="qr-section" class="rounded-3xl bg-white/95 p-6 shadow-soft ring-1 ring-white/40 backdrop-blur hidden">
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">Escaneie o QR Code</h2>
+        <div class="flex flex-col items-center gap-4">
+            <div id="qr-container" class="rounded-2xl border-4 border-brand-500 p-4 bg-white shadow-lg">
+                <img id="qr-image" src="" alt="QR Code" class="w-64 h-64 hidden mx-auto">
+                <div id="qr-loading" class="w-64 h-64 flex items-center justify-center mx-auto">
+                    <div class="text-center">
+                        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-brand-500 border-r-transparent"></div>
+                        <p class="mt-2 text-sm text-slate-600">Gerando QR Code...</p>
+                        <p class="mt-1 text-xs text-slate-500">Aguarde alguns segundos</p>
+                    </div>
+                </div>
+                <div id="qr-error" class="hidden text-center p-4">
+                    <p class="text-sm text-red-600">QR Code não disponível ainda</p>
+                    <button onclick="fetchQRCode()" class="mt-2 text-xs text-brand-600 hover:text-brand-700 underline">
+                        Tentar novamente
+                    </button>
+                </div>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 max-w-md">
+                <p class="text-sm text-blue-800 text-center">
+                    <strong>📱 Como conectar:</strong><br>
+                    1. Abra o WhatsApp no seu celular<br>
+                    2. Toque em <strong>Menu</strong> → <strong>Aparelhos conectados</strong><br>
+                    3. Toque em <strong>Conectar um aparelho</strong><br>
+                    4. Escaneie o QR Code acima
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Alerta de Conectado -->
+    <section id="connected-alert" class="rounded-3xl bg-green-50 border border-green-200 p-6 shadow-soft hidden">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-green-800">✅ WhatsApp Conectado!</h3>
+                <p class="mt-2 text-sm text-green-700">
+                    O bot está conectado e pronto para enviar mensagens.
+                </p>
+                <div class="mt-3 bg-white rounded-lg p-3 border border-green-200">
+                    <p class="text-sm font-medium text-green-800 mb-2">📤 Próximos passos:</p>
+                    <ol class="list-decimal list-inside text-sm text-green-700 space-y-1">
+                        <li>Selecione os clientes que deseja enviar mensagem</li>
+                        <li>Digite a mensagem (pode usar variáveis: {{nome}}, {{valor}}, {{vencimento}})</li>
+                        <li>Clique em "Enviar para Clientes Selecionados"</li>
+                        <li>As mensagens serão enviadas automaticamente para todos os clientes marcados</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Envio em Massa -->
+    <section class="rounded-3xl bg-white/95 p-6 shadow-soft ring-1 ring-white/40 backdrop-blur">
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">Enviar Mensagem em Massa</h2>
+        
+        <!-- Filtros -->
+        <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h3 class="text-sm font-semibold text-slate-700 mb-3">Filtros</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="filter-day" class="block text-xs font-medium text-slate-600 mb-1">
+                        Filtrar por Dia do Mês
+                    </label>
+                    <select id="filter-day" onchange="applyDayFilter()" 
+                            class="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+                        <option value="">Todos os clientes</option>
+                        <option value="5" {% if filter_day == "5" %}selected{% endif %}>Dia 5</option>
+                        <option value="10" {% if filter_day == "10" %}selected{% endif %}>Dia 10</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filter-date" class="block text-xs font-medium text-slate-600 mb-1">
+                        Filtrar por Data Específica (DD/MM/AAAA)
+                    </label>
+                    <input type="text" id="filter-date" placeholder="Ex: 05/12/2025" 
+                           value="{{ filter_date }}"
+                           class="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                           maxlength="10"
+                           oninput="formatDateInput(this)">
+                </div>
+                <div>
+                    <label for="filter-vehicle" class="block text-xs font-medium text-slate-600 mb-1">
+                        Filtrar por Veículo
+                    </label>
+                    <select id="filter-vehicle" onchange="updateMessageByVehicle(); applyVehicleFilter()"
+                            class="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+                        <option value="">Todos</option>
+                        <option value="moto" {% if filter_vehicle == "moto" %}selected{% endif %}>Moto (R$ 49,99)</option>
+                        <option value="carro" {% if filter_vehicle == "carro" %}selected{% endif %}>Carro (R$ 59,99)</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="button" onclick="applyDateFilter()" 
+                            class="flex-1 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600">
+                        Aplicar Filtro
+                    </button>
+                    <button type="button" onclick="clearFilters()" 
+                            class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Limpar
+                    </button>
+                </div>
+            </div>
+            <p class="mt-2 text-xs text-slate-500">
+                💡 Se a data já passou, o sistema busca automaticamente a próxima ocorrência
+            </p>
+        </div>
+        
+        <form id="bulk-form" onsubmit="sendBulkMessage(event)">
+            <div class="space-y-4">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-slate-700">
+                            Selecionar Clientes
+                        </label>
+                        <button type="button" onclick="selectFilteredClients()" 
+                                class="text-xs text-brand-600 hover:text-brand-700 font-semibold">
+                            Selecionar Todos do Filtro
+                        </button>
+                    </div>
+                    <div class="max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
+                        <label class="flex items-center gap-2 mb-3 pb-3 border-b border-slate-200">
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll()" 
+                                   class="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500">
+                            <span class="text-sm font-semibold text-slate-700">Selecionar Todos</span>
+                            <span id="client-count" class="text-xs text-slate-500 ml-auto">({{ clients|length }} clientes)</span>
+                        </label>
+                        <div class="space-y-2" id="clients-list">
+                            {% for client in clients %}
+                            <label class="flex items-center gap-2 hover:bg-slate-50 p-2 rounded cursor-pointer client-item">
+                                <input type="checkbox" name="client_ids" value="{{ client.id }}" 
+                                       class="client-checkbox h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500">
+                                <span class="text-sm text-slate-700 flex-1 font-medium">{{ client.name }}</span>
+                                <span class="text-xs text-slate-500">({{ client.phone }})</span>
+                                <span class="text-xs text-slate-400">Vence: {% if client.due_date %}{{ client.due_date|date:"d/m/Y" }}{% else %}Dia {{ client.due_day }}{% endif %}</span>
+                            </label>
+                            {% empty %}
+                            <p class="text-sm text-slate-500 text-center py-4">
+                                Nenhum cliente encontrado com os filtros aplicados.
+                            </p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="bulk-message" class="block text-sm font-medium text-slate-700 mb-2">
+                        Mensagem Personalizada
+                    </label>
+                    <textarea id="bulk-message" name="message" rows="10" required
+                              class="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                              placeholder="Digite a mensagem que será enviada para todos os clientes selecionados...">💡 Lembrete de Pagamento – Luz Rastreamentos
+
+Olá {{nome}}! 😊
+
+Sua fatura vence hoje no valor de R$ {% if filter_vehicle == "moto" %}49,99{% elif filter_vehicle == "carro" %}59,99{% else %}{{valor}}{% endif %}.
+
+Para evitar interrupções no serviço, realize o pagamento via PIX:
+
+📱 Chave PIX: 63992052169
+
+Obrigado por manter seus pagamentos em dia! ⚡
+
+Caso já tenha pago, desconsidere !!</textarea>
+                    <p class="mt-2 text-xs text-slate-500">
+                        <strong>Variáveis disponíveis:</strong><br>
+                        • <code>{{nome}}</code>, <code>{{nome_cliente}}</code> ou <code>{{cliente}}</code> - Nome do cliente<br>
+                        • <code>{{valor}}</code> - Valor da mensalidade formatado (R$ 49,90)<br>
+                        • <code>{{vencimento}}</code> - Data de vencimento (DD/MM/AAAA)<br>
+                        • <code>{{link_pagamento}}</code> - Link de pagamento do cliente
+                    </p>
+                </div>
+                <button type="submit" id="btn-send-bulk"
+                        class="w-full rounded-xl bg-accent-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Enviar para Clientes Selecionados
+                </button>
+            </div>
+        </form>
+        <div id="bulk-result" class="mt-4 hidden"></div>
+    </section>
+</div>
+
+<script>
+const API_BASE = '/api';
+let statusCheckInterval = null;
+
+// Funções de controle do bot
+async function checkStatus() {
+    try {
+        const response = await fetch(`${API_BASE}/bot/control/`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            cache: 'no-cache', // Sempre buscar versão atualizada
+        });
+        
+        if (!response.ok) {
+            throw new Error('Servidor do bot não está respondendo');
+        }
+        
+        const data = await response.json();
+        console.log('Status do bot:', data);
+        updateStatusUI(data);
+        
+        // Se tem QR Code no status, exibir imediatamente
+        if (data.qrCode) {
+            const qrImage = document.getElementById('qr-image');
+            const qrLoading = document.getElementById('qr-loading');
+            const qrError = document.getElementById('qr-error');
+            const qrSection = document.getElementById('qr-section');
+            
+            // Limpar QR Code (remover prefixo se existir)
+            let cleanQR = data.qrCode;
+            if (cleanQR && cleanQR.startsWith('data:image')) {
+                cleanQR = cleanQR.split(',')[1] || cleanQR;
+            }
+            
+            const qrDataUrl = `data:image/png;base64,${cleanQR}`;
+            
+            qrImage.onload = function() {
+                console.log('✅ QR Code do status exibido!');
+                qrImage.classList.remove('hidden');
+                qrLoading.classList.add('hidden');
+                qrError.classList.add('hidden');
+            };
+            
+            qrImage.onerror = function() {
+                console.error('❌ Erro ao carregar QR Code do status');
+                qrError.classList.remove('hidden');
+                qrLoading.classList.add('hidden');
+            };
+            
+            qrImage.src = qrDataUrl;
+            qrSection.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Erro ao verificar status:', error);
+        updateStatusUI({ 
+            status: 'error', 
+            error: 'Não foi possível conectar ao bot. Certifique-se de que o servidor Node.js está rodando na porta 3001.' 
+        });
+    }
+}
+
+function updateStatusUI(data) {
+    const indicator = document.getElementById('status-indicator');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const qrSection = document.getElementById('qr-section');
+    const qrImage = document.getElementById('qr-image');
+    const qrLoading = document.getElementById('qr-loading');
+    const offlineAlert = document.getElementById('bot-offline-alert');
+    const connectedAlert = document.getElementById('connected-alert');
+
+    let statusText = 'Desconectado';
+    let statusColor = 'bg-gray-400';
+    let statusTextColor = 'text-slate-600';
+    
+    // Mostrar alerta se bot não está rodando
+    if (data.status === 'error' || (data.error && data.error.includes('conectar'))) {
+        offlineAlert.classList.remove('hidden');
+        connectedAlert.classList.add('hidden');
+    } else {
+        offlineAlert.classList.add('hidden');
+    }
+
+    switch(data.status) {
+        case 'connected':
+            statusText = 'Conectado';
+            statusColor = 'bg-green-500';
+            statusTextColor = 'text-green-600';
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            qrSection.classList.add('hidden');
+            connectedAlert.classList.remove('hidden');
+            // Removido scroll automático para não atrapalhar a navegação do usuário
+            break;
+        case 'waiting_qr':
+        case 'connecting':
+            statusText = 'Aguardando QR Code';
+            statusColor = 'bg-yellow-500';
+            statusTextColor = 'text-yellow-600';
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            qrSection.classList.remove('hidden');
+            connectedAlert.classList.add('hidden');
+            
+            // Removido scroll automático para não atrapalhar a navegação do usuário
+            
+            // Se tem QR Code no status, exibir imediatamente
+            if (data.qrCode) {
+                // Limpar QR Code (remover prefixo se existir)
+                let cleanQR = data.qrCode;
+                if (cleanQR && cleanQR.startsWith('data:image')) {
+                    cleanQR = cleanQR.split(',')[1] || cleanQR;
+                }
+                
+                const qrDataUrl = `data:image/png;base64,${cleanQR}`;
+                qrImage.onload = function() {
+                    console.log('✅ QR Code exibido do status!');
+                    qrImage.classList.remove('hidden');
+                    qrLoading.classList.add('hidden');
+                };
+                qrImage.onerror = function() {
+                    console.error('❌ Erro ao carregar QR Code');
+                };
+                qrImage.src = qrDataUrl;
+            } else {
+                // Se não tem, buscar
+                qrImage.classList.add('hidden');
+                qrLoading.classList.remove('hidden');
+                // Buscar múltiplas vezes para garantir
+                fetchQRCode();
+                setTimeout(() => fetchQRCode(), 1000);
+                setTimeout(() => fetchQRCode(), 2000);
+            }
+            break;
+        case 'error':
+            statusText = 'Erro: ' + (data.error || 'Erro desconhecido');
+            statusColor = 'bg-red-500';
+            statusTextColor = 'text-red-600';
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            qrSection.classList.add('hidden');
+            connectedAlert.classList.add('hidden');
+            break;
+        default:
+            statusText = 'Desconectado';
+            statusColor = 'bg-gray-400';
+            statusTextColor = 'text-slate-600';
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            qrSection.classList.add('hidden');
+            connectedAlert.classList.add('hidden');
+    }
+
+    indicator.innerHTML = `
+        <span class="h-3 w-3 rounded-full ${statusColor}"></span>
+        <span class="text-sm ${statusTextColor}">${statusText}</span>
+    `;
+}
+
+async function startBot() {
+    const btnStart = document.getElementById('btn-start');
+    btnStart.disabled = true;
+    btnStart.textContent = 'Iniciando...';
+
+    try {
+        const response = await fetch(`${API_BASE}/bot/control/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ action: 'start' }),
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            // Atualizar status imediatamente
+            checkStatus();
+            
+            // Buscar QR Code várias vezes para garantir que aparece
+            setTimeout(() => fetchQRCode(), 500);
+            setTimeout(() => fetchQRCode(), 1500);
+            setTimeout(() => fetchQRCode(), 3000);
+            setTimeout(() => fetchQRCode(), 5000);
+            
+            // Iniciar verificação periódica do QR Code
+            if (!statusCheckInterval) {
+                statusCheckInterval = setInterval(() => {
+                    checkStatus();
+                    fetchQRCode();
+                }, 2000);
+            }
+        } else {
+            alert('Erro ao iniciar bot: ' + (data.error || 'Erro desconhecido'));
+            btnStart.disabled = false;
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao iniciar bot. Verifique se o servidor do bot está rodando.');
+        btnStart.disabled = false;
+    } finally {
+        btnStart.textContent = 'Iniciar Bot';
+    }
+}
+
+async function stopBot() {
+    if (!confirm('Tem certeza que deseja parar o bot?')) return;
+
+    const btnStop = document.getElementById('btn-stop');
+    btnStop.disabled = true;
+    btnStop.textContent = 'Parando...';
+
+    try {
+        const response = await fetch(`${API_BASE}/bot/control/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ action: 'stop' }),
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Bot parado com sucesso!');
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+                statusCheckInterval = null;
+            }
+            checkStatus();
+        } else {
+            alert('Erro ao parar bot: ' + (data.error || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao parar bot.');
+    } finally {
+        btnStop.disabled = false;
+        btnStop.textContent = 'Parar Bot';
+    }
+}
+
+async function fetchQRCode() {
+    try {
+        const response = await fetch(`${API_BASE}/bot/qr/`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            cache: 'no-cache', // Sempre buscar versão atualizada
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erro ao buscar QR Code');
+        }
+        
+        const data = await response.json();
+        console.log('QR Code response:', data);
+        
+        if (data.success && data.qrCode) {
+            const qrImage = document.getElementById('qr-image');
+            const qrLoading = document.getElementById('qr-loading');
+            const qrError = document.getElementById('qr-error');
+            const qrSection = document.getElementById('qr-section');
+            
+            // Limpar QR Code (remover prefixo se existir)
+            let cleanQR = data.qrCode;
+            if (cleanQR && cleanQR.startsWith('data:image')) {
+                cleanQR = cleanQR.split(',')[1] || cleanQR;
+                console.log('✅ Prefixo removido do QR Code no frontend');
+            }
+            
+            // Criar data URL corretamente
+            const qrDataUrl = `data:image/png;base64,${cleanQR}`;
+            
+            console.log('📱 Tentando exibir QR Code (tamanho base64: ' + cleanQR.length + ' caracteres)');
+            
+            // Verificar se a imagem carregou
+            qrImage.onload = function() {
+                console.log('✅ QR Code carregado e exibido na tela!');
+                qrImage.classList.remove('hidden');
+                qrLoading.classList.add('hidden');
+                qrError.classList.add('hidden');
+            };
+            
+            qrImage.onerror = function() {
+                console.error('❌ Erro ao carregar QR Code');
+                console.error('QR Code data:', qrDataUrl.substring(0, 100) + '...');
+                qrError.classList.remove('hidden');
+                qrLoading.classList.add('hidden');
+            };
+            
+            qrImage.src = qrDataUrl;
+            
+            // Garantir que a seção está visível
+            qrSection.classList.remove('hidden');
+        } else if (data.status === 'waiting_qr' || data.status === 'connecting') {
+            // Ainda aguardando QR Code
+            const qrLoading = document.getElementById('qr-loading');
+            const qrImage = document.getElementById('qr-image');
+            const qrSection = document.getElementById('qr-section');
+            
+            qrLoading.classList.remove('hidden');
+            qrImage.classList.add('hidden');
+            qrSection.classList.remove('hidden');
+            
+            console.log('⏳ Aguardando QR Code...');
+        } else {
+            console.log('QR Code não disponível:', data.message || 'Status: ' + data.status);
+        }
+    } catch (error) {
+        console.error('Erro ao buscar QR Code:', error);
+    }
+}
+
+// Envio em massa
+async function sendBulkMessage(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const btnSend = document.getElementById('btn-send-bulk');
+    const resultDiv = document.getElementById('bulk-result');
+    
+    const clientIds = Array.from(document.querySelectorAll('input[name="client_ids"]:checked'))
+        .map(cb => cb.value);
+    const message = document.getElementById('bulk-message').value;
+
+    if (clientIds.length === 0) {
+        alert('Selecione pelo menos um cliente.');
+        return;
+    }
+
+    if (!message.trim()) {
+        alert('Digite uma mensagem.');
+        return;
+    }
+
+    btnSend.disabled = true;
+    btnSend.textContent = 'Enviando...';
+    resultDiv.classList.add('hidden');
+
+    try {
+        const response = await fetch(`${API_BASE}/bot/send-bulk/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                client_ids: clientIds,
+                message: message,
+            }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: `Erro HTTP ${response.status}` }));
+            throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Resposta do envio:', data);
+        
+        if (data.success !== false && !data.error) {
+            resultDiv.innerHTML = `
+                <div class="rounded-xl bg-green-50 border border-green-200 p-4">
+                    <p class="text-sm font-semibold text-green-800">
+                        ✅ Envio concluído!
+                    </p>
+                    <p class="text-sm text-green-700 mt-2">
+                        Enviados: ${data.sent || 0} | Falhas: ${data.failed || 0}
+                    </p>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+            form.reset();
+            document.querySelectorAll('.client-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('select-all').checked = false;
+            updateClientCount();
+        } else {
+            alert('Erro ao enviar mensagens: ' + (data.error || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        console.error('Erro ao enviar mensagens:', error);
+        let errorMessage = 'Erro ao enviar mensagens. ';
+        
+        if (error.message) {
+            errorMessage += error.message;
+        } else if (error.response) {
+            errorMessage += `Status: ${error.response.status}`;
+        } else {
+            errorMessage += 'Verifique se o bot está conectado e tente novamente.';
+        }
+        
+        alert(errorMessage);
+        
+        // Mostrar detalhes no console para debug
+        console.error('Detalhes do erro:', {
+            error: error,
+            message: error.message,
+            stack: error.stack
+        });
+    } finally {
+        btnSend.disabled = false;
+        btnSend.textContent = 'Enviar para Clientes Selecionados';
+    }
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.client-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateClientCount();
+}
+
+function selectFilteredClients() {
+    const checkboxes = document.querySelectorAll('.client-checkbox');
+    checkboxes.forEach(cb => cb.checked = true);
+    document.getElementById('select-all').checked = true;
+    updateClientCount();
+}
+
+function updateClientCount() {
+    const checked = document.querySelectorAll('.client-checkbox:checked').length;
+    const total = document.querySelectorAll('.client-checkbox').length;
+    const countEl = document.getElementById('client-count');
+    if (countEl) {
+        countEl.textContent = `(${checked}/${total} selecionados)`;
+    }
+}
+
+function getFilterParams() {
+    const params = new URLSearchParams();
+    const day = document.getElementById('filter-day').value;
+    const date = document.getElementById('filter-date').value;
+    const vehicle = document.getElementById('filter-vehicle').value;
+    
+    if (day) params.set('filter_day', day);
+    if (date) params.set('filter_date', date);
+    if (vehicle) params.set('filter_vehicle', vehicle);
+    
+    return params.toString();
+}
+
+function applyDayFilter() {
+    const params = getFilterParams();
+    window.location.href = params ? `?${params}` : window.location.pathname;
+}
+
+function applyDateFilter() {
+    const params = getFilterParams();
+    window.location.href = params ? `?${params}` : window.location.pathname;
+}
+
+function updateMessageByVehicle() {
+    const vehicleSelect = document.getElementById('filter-vehicle');
+    const messageTextarea = document.getElementById('bulk-message');
+    
+    if (!vehicleSelect || !messageTextarea) return;
+    
+    const vehicle = vehicleSelect.value;
+    
+    // Se não houver veículo selecionado, manter a tag {{valor}}
+    if (!vehicle) {
+        // Se já foi substituído, restaurar a tag
+        let currentMessage = messageTextarea.value;
+        if (currentMessage.includes('R$ 49,99') || currentMessage.includes('R$ 59,99')) {
+            currentMessage = currentMessage.replace(/R\$\s*(49,99|59,99)/g, 'R$ {{valor}}');
+            messageTextarea.value = currentMessage;
+        }
+        return;
+    }
+    
+    let valor = '49,99'; // Padrão para moto
+    
+    if (vehicle === 'moto') {
+        valor = '49,99';
+    } else if (vehicle === 'carro') {
+        valor = '59,99';
+    }
+    
+    // Atualizar a mensagem substituindo {{valor}} pelo valor real
+    let currentMessage = messageTextarea.value;
+    
+    // Se a mensagem ainda tem a tag {{valor}}, substituir
+    if (currentMessage.includes('{{valor}}')) {
+        currentMessage = currentMessage.replace(/\{\{valor\}\}/g, valor);
+        messageTextarea.value = currentMessage;
+    } else if (currentMessage.includes('R$ 49,99') || currentMessage.includes('R$ 59,99')) {
+        // Se já foi substituído antes, atualizar apenas o valor numérico
+        currentMessage = currentMessage.replace(/R\$\s*(49,99|59,99)/g, `R$ ${valor}`);
+        messageTextarea.value = currentMessage;
+    }
+}
+
+function applyVehicleFilter() {
+    // Atualizar mensagem antes de aplicar filtro
+    updateMessageByVehicle();
+    
+    const params = getFilterParams();
+    window.location.href = params ? `?${params}` : window.location.pathname;
+}
+
+function clearFilters() {
+    window.location.href = window.location.pathname;
+}
+
+function formatDateInput(input) {
+    // Remove tudo que não é número
+    let value = input.value.replace(/\D/g, '');
+    
+    // Aplica máscara DD/MM/AAAA
+    if (value.length > 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2);
+    }
+    if (value.length > 5) {
+        value = value.substring(0, 5) + '/' + value.substring(5, 9);
+    }
+    
+    input.value = value;
+}
+
+// Atualizar contador quando checkboxes mudarem
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.client-checkbox');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateClientCount);
+    });
+    updateClientCount();
+    
+    // Atualizar mensagem se já houver filtro de veículo aplicado
+    updateMessageByVehicle();
+});
+
+// Utilitários
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando dashboard do bot...');
+    
+    // Verificar status imediatamente
+    checkStatus();
+    
+    // Buscar QR Code imediatamente também (várias tentativas)
+    setTimeout(() => fetchQRCode(), 500);
+    setTimeout(() => fetchQRCode(), 1500);
+    setTimeout(() => fetchQRCode(), 3000);
+    
+    // Atualizar contador de clientes
+    updateClientCount();
+    
+    // Verificar status periodicamente
+    const statusInterval = setInterval(() => {
+        checkStatus();
+    }, 2000); // Verifica a cada 2 segundos
+    
+    // Verificar QR Code periodicamente (mais frequente quando aguardando)
+    const qrInterval = setInterval(() => {
+        fetchQRCode();
+    }, 1500); // Busca QR Code a cada 1.5 segundos
+    
+    // Limpar intervalos quando a página for fechada
+    window.addEventListener('beforeunload', () => {
+        clearInterval(statusInterval);
+        clearInterval(qrInterval);
+    });
+});
+</script>
+{% endblock %}
+

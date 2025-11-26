@@ -1,0 +1,47 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Entrar - Painel{% endblock %}
+
+{% block content %}
+<section class="relative flex min-h-[70vh] items-center justify-center">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(242,101,34,0.28),_transparent_55%)]"></div>
+    <div class="relative w-full max-w-md overflow-hidden rounded-3xl bg-white/95 p-10 shadow-soft ring-1 ring-white/40 backdrop-blur">
+        <h1 class="text-center text-3xl font-semibold text-slate-900">Bem-vindo de volta</h1>
+        <p class="mt-2 text-center text-sm text-slate-500">Acesse com suas credenciais para continuar.</p>
+        {% if form.errors %}
+            <div class="mt-5 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700">
+                Usuário ou senha incorretos. Tente novamente.
+            </div>
+        {% endif %}
+        <form method="post" novalidate class="mt-8 space-y-5">
+            {% csrf_token %}
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-600" for="{{ form.username.id_for_label }}">Usuário</label>
+                {{ form.username }}
+            </div>
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-600" for="{{ form.password.id_for_label }}">Senha</label>
+                {{ form.password }}
+            </div>
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit"
+                    class="w-full rounded-2xl bg-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-600">
+                Entrar
+            </button>
+        </form>
+    </div>
+</section>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("input[type='text'], input[type='password']").forEach(function (input) {
+            input.className = "";
+            input.classList.add(
+                "block", "w-full", "rounded-2xl", "border", "border-slate-200", "bg-white", "px-4", "py-3",
+                "text-sm", "font-medium", "text-slate-700", "shadow-sm", "focus:border-brand-500",
+                "focus:outline-none", "focus:ring-2", "focus:ring-brand-200"
+            );
+        });
+    });
+</script>
+{% endblock %}
+
