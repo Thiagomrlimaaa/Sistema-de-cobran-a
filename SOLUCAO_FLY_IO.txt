@@ -1,0 +1,66 @@
+================================================================================
+  SOLUÇÃO PARA PROBLEMA NO FLY.IO
+================================================================================
+
+O QUE ESTÁ ACONTECENDO:
+-----------------------
+Fly.io está em manutenção de rede na região JNB (Johannesburg).
+Isso é manutenção do Fly.io, não um erro do seu código.
+
+Manutenção: 26/11/2025, 14:00-18:00 UTC
+Impacto: Perda de conectividade por até 20 minutos
+
+OPÇÕES:
+-------
+
+OPÇÃO 1: ESPERAR MANUTENÇÃO TERMINAR
+-------------------------------------
+- Aguarde até 18:00 UTC (26/11/2025)
+- Depois tente fazer deploy novamente
+- Pode escolher outra região (não JNB)
+
+OPÇÃO 2: USAR OUTRA REGIÃO NO FLY.IO
+-------------------------------------
+Ao criar o app, escolha uma região diferente de JNB:
+- iad (Washington DC) - recomendado
+- ord (Chicago)
+- dfw (Dallas)
+- sea (Seattle)
+
+OPÇÃO 3: USAR RENDER.COM (RECOMENDADO)
+--------------------------------------
+Render.com é mais fácil que Fly.io:
+✅ Interface mais simples
+✅ Deploy automático via GitHub
+✅ SSL gratuito
+✅ Suporte a Django + Node.js
+✅ PostgreSQL gratuito
+
+Veja o arquivo: DEPLOY_RENDER.txt
+
+OPÇÃO 4: USAR ORACLE CLOUD (SEMPRE GRATUITO)
+---------------------------------------------
+Oracle Cloud Free Tier:
+✅ Sempre gratuito (não expira)
+✅ Não "dorme"
+✅ 2 VMs gratuitas
+✅ 200GB de armazenamento
+
+Veja o arquivo: GUIA_ORACLE_CLOUD.txt
+
+================================================================================
+  RECOMENDAÇÃO
+================================================================================
+
+Para começar rápido: Use Render.com
+- Mais fácil de configurar
+- Deploy em minutos
+- Plano gratuito disponível
+
+Para uso ilimitado: Use Oracle Cloud
+- Sempre gratuito
+- Não dorme
+- Mais configuração necessária
+
+================================================================================
+

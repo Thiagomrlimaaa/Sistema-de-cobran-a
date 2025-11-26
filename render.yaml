@@ -32,7 +32,7 @@ services:
     rootDir: cobranca-bot
     buildCommand: |
       npm install
-      npx puppeteer browsers install chrome
+      npx puppeteer browsers install chrome || echo "Chrome installation failed, will use system Chromium"
     startCommand: npm start
     envVars:
       - key: NODE_VERSION

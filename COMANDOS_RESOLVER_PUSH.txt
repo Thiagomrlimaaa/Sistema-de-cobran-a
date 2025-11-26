@@ -1,0 +1,73 @@
+================================================================================
+  COMANDOS PARA RESOLVER O ERRO DE PUSH
+================================================================================
+
+O repositório remoto tem mudanças (provavelmente um README criado no GitHub).
+Precisamos integrar essas mudanças primeiro.
+
+================================================================================
+  OPÇÃO 1: USAR GIT BASH (RECOMENDADO)
+================================================================================
+
+1. Abra Git Bash (procure no menu Iniciar)
+
+2. Execute estes comandos:
+
+cd "/c/Users/AVELL/Documents/chatbot - cobrança"
+
+git pull origin main --allow-unrelated-histories
+
+# Se aparecer editor de merge, pressione Esc, digite :wq e Enter
+
+git push -u origin main
+
+================================================================================
+  OPÇÃO 2: USAR POWERSHELL COM CAMINHO COMPLETO
+================================================================================
+
+Execute no PowerShell:
+
+& "C:\Program Files\Git\cmd\git.exe" pull origin main --allow-unrelated-histories
+
+& "C:\Program Files\Git\cmd\git.exe" push -u origin main
+
+================================================================================
+  O QUE FAZER SE DER CONFLITO
+================================================================================
+
+Se aparecer "CONFLICT (add/add)" ou similar:
+
+1. Os arquivos conflitantes terão marcadores:
+   <<<<<<< HEAD
+   (seu código)
+   =======
+   (código do GitHub)
+   >>>>>>> origin/main
+
+2. Abra os arquivos e resolva manualmente
+   - Escolha qual versão manter
+   - Ou combine as duas
+
+3. Depois execute:
+   git add .
+   git commit -m "Resolver conflitos"
+   git push -u origin main
+
+================================================================================
+  EXPLICAÇÃO DO COMANDO
+================================================================================
+
+git pull origin main --allow-unrelated-histories
+
+- pull: busca mudanças do GitHub
+- origin: nome do repositório remoto
+- main: branch principal
+- --allow-unrelated-histories: permite mesclar históricos diferentes
+
+Isso é necessário porque:
+- Seu repositório local tem um histórico
+- O GitHub tem outro histórico (README criado lá)
+- Eles precisam ser mesclados
+
+================================================================================
+

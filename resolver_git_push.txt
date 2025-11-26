@@ -1,0 +1,69 @@
+================================================================================
+  RESOLVER ERRO DE PUSH NO GITHUB
+================================================================================
+
+PROBLEMA:
+---------
+O repositório remoto tem mudanças que você não tem localmente.
+Isso geralmente acontece quando:
+- O repositório foi criado com README no GitHub
+- Ou há mudanças feitas diretamente no GitHub
+
+SOLUÇÃO:
+--------
+Execute estes comandos no Git Bash ou PowerShell:
+
+# 1. Buscar mudanças do GitHub
+git pull origin main --allow-unrelated-histories
+
+# 2. Se der conflito, resolva e depois:
+git add .
+git commit -m "Merge com repositório remoto"
+
+# 3. Enviar para GitHub
+git push -u origin main
+
+================================================================================
+  COMANDOS COMPLETOS (COPIE E COLE)
+================================================================================
+
+# Opção 1: Integrar mudanças remotas
+git pull origin main --allow-unrelated-histories
+git push -u origin main
+
+# Opção 2: Se quiser forçar (CUIDADO - apaga mudanças remotas)
+# git push -u origin main --force
+
+================================================================================
+  PASSO A PASSO DETALHADO
+================================================================================
+
+1. Abra Git Bash ou PowerShell
+2. Navegue até a pasta:
+   cd "/c/Users/AVELL/Documents/chatbot - cobrança"
+
+3. Execute:
+   git pull origin main --allow-unrelated-histories
+
+4. Se aparecer mensagem de merge, aceite (Enter)
+
+5. Depois execute:
+   git push -u origin main
+
+6. Pronto!
+
+================================================================================
+  SE DER CONFLITO
+================================================================================
+
+Se aparecer "CONFLICT", significa que há arquivos conflitantes.
+
+1. Abra os arquivos marcados com <<<<<<< HEAD
+2. Resolva os conflitos manualmente
+3. Depois execute:
+   git add .
+   git commit -m "Resolver conflitos"
+   git push -u origin main
+
+================================================================================
+

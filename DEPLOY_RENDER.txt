@@ -1,0 +1,144 @@
+================================================================================
+  DEPLOY NO RENDER.COM (ALTERNATIVA AO FLY.IO)
+  Mais fácil e rápido que Fly.io
+================================================================================
+
+PROBLEMA NO FLY.IO:
+-------------------
+O Fly.io está em manutenção na região JNB.
+Você pode:
+1. Esperar a manutenção terminar (até 18:00 UTC)
+2. OU usar Render.com (mais fácil e recomendado)
+
+================================================================================
+  PASSO A PASSO - RENDER.COM
+================================================================================
+
+PASSO 1: CRIAR CONTA
+---------------------
+1. Acesse: https://render.com
+2. Clique em "Get Started for Free"
+3. Faça login com GitHub (recomendado) ou crie conta com email
+
+PASSO 2: CONECTAR REPOSITÓRIO
+------------------------------
+1. No painel do Render, clique em "New +"
+2. Escolha "Blueprint" (se quiser usar o render.yaml) OU
+3. Escolha "Web Service" para Django
+
+PASSO 3: CONFIGURAR DJANGO (WEB SERVICE)
+-----------------------------------------
+1. Conecte seu repositório GitHub: https://github.com/Thiagomrlimaaa/Sistema-de-cobran-a
+2. Preencha:
+   - Name: django-server (ou qualquer nome)
+   - Region: Oregon (ou mais próximo de você)
+   - Branch: main
+   - Root Directory: (deixe vazio)
+   - Runtime: Python 3
+   - Build Command: pip install -r requirements.txt && python manage.py migrate
+   - Start Command: python manage.py runserver 0.0.0.0:$PORT
+
+3. Clique em "Advanced" e adicione variáveis de ambiente:
+   - DJANGO_SECRET_KEY: (gere uma chave - veja abaixo)
+   - DJANGO_DEBUG: False
+   - DJANGO_ALLOWED_HOSTS: django-server.onrender.com
+   - WPPCONNECT_BOT_URL: https://whatsapp-bot.onrender.com
+   - DJANGO_API_URL: https://django-server.onrender.com/api
+
+4. Clique em "Create Web Service"
+
+PASSO 4: CONFIGURAR BOT (BACKGROUND WORKER)
+--------------------------------------------
+1. No painel, clique em "New +" → "Background Worker"
+2. Conecte o mesmo repositório
+3. Preencha:
+   - Name: whatsapp-bot
+   - Region: Oregon (mesma do Django)
+   - Branch: main
+   - Root Directory: cobranca-bot
+   - Build Command: npm install
+   - Start Command: npm start
+
+4. Adicione variáveis de ambiente:
+   - DJANGO_API_URL: https://django-server.onrender.com/api
+   - WHATSAPP_SESSION: cobranca
+   - BOT_PORT: 3001
+
+5. Clique em "Create Background Worker"
+
+PASSO 5: GERAR SECRET_KEY
+--------------------------
+No terminal local, execute:
+  python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+Copie a chave gerada e use no DJANGO_SECRET_KEY do Render.
+
+PASSO 6: AGUARDAR DEPLOY
+-------------------------
+1. Render vai fazer deploy automaticamente
+2. Aguarde alguns minutos
+3. Django estará em: https://django-server.onrender.com
+4. Bot rodará como worker em background
+
+PASSO 7: TESTAR
+---------------
+1. Acesse: https://django-server.onrender.com
+2. Faça login
+3. Vá em "WhatsApp Bot" → "Iniciar Bot"
+4. Escaneie o QR Code
+
+================================================================================
+  IMPORTANTE - LIMITAÇÕES DO PLANO GRATUITO
+================================================================================
+
+- Serviços "dormem" após 15min de inatividade
+- Primeira requisição após dormir pode levar 30-60 segundos
+- 750 horas/mês gratuitas (suficiente para uso normal)
+
+Para serviços que não dormem: $7/mês por serviço
+
+================================================================================
+  CONFIGURAR BANCO DE DADOS (OPCIONAL)
+================================================================================
+
+Render oferece PostgreSQL gratuito:
+
+1. No painel, clique em "New +" → "PostgreSQL"
+2. Escolha plano "Free"
+3. Anote as credenciais
+4. No Django, adicione variável:
+   DATABASE_URL: postgresql://user:pass@host:port/dbname
+
+5. Instale: pip install dj-database-url
+6. Configure no settings.py para usar DATABASE_URL
+
+================================================================================
+  TROUBLESHOOTING
+================================================================================
+
+ERRO: "Build failed"
+- Verifique se requirements.txt está correto
+- Verifique logs no Render
+
+ERRO: "Service unavailable"
+- Serviço pode estar "dormindo" (plano gratuito)
+- Aguarde 30-60 segundos na primeira requisição
+
+ERRO: "Bot não conecta"
+- Verifique se o worker está rodando
+- Verifique variável DJANGO_API_URL no bot
+- Verifique logs do worker
+
+================================================================================
+  VANTAGENS DO RENDER vs FLY.IO
+================================================================================
+
+✅ Mais fácil de configurar
+✅ Interface mais simples
+✅ Deploy automático via GitHub
+✅ SSL gratuito automático
+✅ Suporte a múltiplos serviços
+✅ PostgreSQL gratuito incluído
+
+================================================================================
+

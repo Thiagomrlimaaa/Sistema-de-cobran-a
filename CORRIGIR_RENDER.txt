@@ -1,0 +1,76 @@
+================================================================================
+  CORREÇÃO DO ERRO NO RENDER
+================================================================================
+
+PROBLEMA:
+---------
+ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'
+
+SOLUÇÃO:
+--------
+O arquivo requirements.txt foi criado! Agora você precisa:
+
+1. ENVIAR O ARQUIVO PARA O GITHUB
+   - O requirements.txt precisa estar no repositório
+   - Faça commit e push do arquivo
+
+2. NO RENDER:
+   - Vá em seu serviço Django
+   - Clique em "Manual Deploy" → "Deploy latest commit"
+   - OU aguarde o deploy automático
+
+================================================================================
+  ENVIAR requirements.txt PARA GITHUB
+================================================================================
+
+OPÇÃO 1: VIA GIT BASH
+---------------------
+1. Abra Git Bash
+2. Execute:
+   cd "/c/Users/AVELL/Documents/chatbot - cobrança"
+   git add requirements.txt
+   git commit -m "Adicionar requirements.txt"
+   git push
+
+OPÇÃO 2: VIA INTERFACE DO GITHUB
+---------------------------------
+1. Acesse: https://github.com/Thiagomrlimaaa/Sistema-de-cobran-a
+2. Clique em "Add file" → "Upload files"
+3. Arraste o arquivo requirements.txt
+4. Clique em "Commit changes"
+
+================================================================================
+  VERIFICAR SE ESTÁ NO GITHUB
+================================================================================
+
+Após enviar, verifique:
+https://github.com/Thiagomrlimaaa/Sistema-de-cobran-a
+
+O arquivo requirements.txt deve aparecer na raiz do repositório.
+
+================================================================================
+  DEPOIS DE ENVIAR
+================================================================================
+
+1. No Render, vá em seu serviço Django
+2. Clique em "Manual Deploy" → "Deploy latest commit"
+3. Aguarde o build
+4. Deve funcionar agora!
+
+================================================================================
+  CONTEÚDO DO requirements.txt
+================================================================================
+
+O arquivo contém:
+- Django==4.2.11
+- djangorestframework==3.15.2
+- celery==5.3.4
+- django-celery-beat==2.5.0
+- python-dotenv==1.0.0
+- requests==2.31.0
+- whitenoise==6.6.0
+
+Todas as dependências necessárias para o projeto!
+
+================================================================================
+

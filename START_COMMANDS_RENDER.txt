@@ -1,0 +1,98 @@
+================================================================================
+  START COMMANDS PARA RENDER.COM
+================================================================================
+
+SERVIÇO 1: DJANGO (Web Service)
+--------------------------------
+Start Command:
+  python manage.py runserver 0.0.0.0:$PORT
+
+Build Command:
+  pip install -r requirements.txt && python manage.py migrate
+
+Root Directory:
+  (deixe vazio - raiz do projeto)
+
+Environment: Python 3
+
+================================================================================
+
+SERVIÇO 2: BOT WHATSAPP (Background Worker)
+--------------------------------------------
+Start Command:
+  cd cobranca-bot && npm start
+
+OU se configurar Root Directory como "cobranca-bot":
+  npm start
+
+Build Command:
+  cd cobranca-bot && npm install
+
+Root Directory:
+  cobranca-bot
+  (ou deixe vazio e use "cd cobranca-bot &&" no comando)
+
+Environment: Node
+
+================================================================================
+  CONFIGURAÇÃO COMPLETA NO RENDER
+================================================================================
+
+DJANGO (Web Service):
+---------------------
+Name: django-server
+Environment: Python 3
+Region: Oregon (ou mais próximo)
+Plan: Free
+Branch: main
+Root Directory: (vazio)
+Build Command: pip install -r requirements.txt && python manage.py migrate
+Start Command: python manage.py runserver 0.0.0.0:$PORT
+
+Variáveis de Ambiente:
+- DJANGO_SECRET_KEY: (gere uma - veja abaixo)
+- DJANGO_DEBUG: False
+- DJANGO_ALLOWED_HOSTS: django-server.onrender.com
+- WPPCONNECT_BOT_URL: https://whatsapp-bot.onrender.com
+- DJANGO_API_URL: https://django-server.onrender.com/api
+
+BOT (Background Worker):
+-------------------------
+Name: whatsapp-bot
+Environment: Node
+Region: Oregon (mesma do Django)
+Plan: Free
+Branch: main
+Root Directory: cobranca-bot
+Build Command: npm install
+Start Command: npm start
+
+Variáveis de Ambiente:
+- DJANGO_API_URL: https://django-server.onrender.com/api
+- WHATSAPP_SESSION: cobranca
+- BOT_PORT: 3001
+- NODE_VERSION: 18.x
+
+================================================================================
+  GERAR DJANGO_SECRET_KEY
+================================================================================
+
+No seu terminal local, execute:
+
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+Copie a chave gerada e use no DJANGO_SECRET_KEY do Render.
+
+================================================================================
+  IMPORTANTE
+================================================================================
+
+1. O $PORT é uma variável automática do Render - não precisa configurar
+2. Django vai rodar na porta que o Render definir automaticamente
+3. Bot vai rodar na porta 3001 (definida em BOT_PORT)
+4. Após criar os serviços, anote as URLs:
+   - Django: https://django-server.onrender.com
+   - Atualize WPPCONNECT_BOT_URL e DJANGO_API_URL com a URL real
+
+================================================================================
+

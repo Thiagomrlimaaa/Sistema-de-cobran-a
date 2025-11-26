@@ -1,0 +1,25 @@
+================================================================================
+  ENVIAR TUDO PARA GITHUB
+================================================================================
+
+ABRA GIT BASH E EXECUTE:
+
+cd "/c/Users/AVELL/Documents/chatbot - cobrança"
+
+git add .
+
+git commit -m "Corrigir configuração do bot para Render - adicionar suporte Chromium"
+
+git push
+
+================================================================================
+  O QUE SERÁ ENVIADO
+================================================================================
+
+- requirements.txt (novo)
+- render.yaml (atualizado com instalação Chrome)
+- cobranca-bot/index.js (atualizado com suporte Chromium)
+- Todos os outros arquivos do projeto
+
+================================================================================
+

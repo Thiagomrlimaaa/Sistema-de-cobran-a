@@ -2,7 +2,34 @@ const wppconnect = require('@wppconnect-team/wppconnect');
 const axios = require('axios');
 const express = require('express');
 const cors = require('cors');
+const { execSync } = require('child_process');
 require('dotenv').config();
+
+// Tentar encontrar Chromium no sistema
+function findChromium() {
+  const fs = require('fs');
+  const possiblePaths = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    process.env.CHROMIUM_PATH
+  ];
+  
+  for (const path of possiblePaths) {
+    if (path && fs.existsSync(path)) {
+      return path;
+    }
+  }
+  return undefined;
+}
+
+const chromiumPath = findChromium();
+if (chromiumPath) {
+  console.log(`✅ Chromium encontrado em: ${chromiumPath}`);
+} else {
+  console.log('⚠️ Chromium não encontrado no sistema, tentando usar Chrome do Puppeteer');
+}
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
 const SESSION_NAME = process.env.WHATSAPP_SESSION || 'cobranca';
@@ -174,6 +201,30 @@ function initializeWhatsApp() {
   return wppconnect
     .create({
       session: SESSION_NAME,
+      browserArgs: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu'
+      ],
+      puppeteerOptions: {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ],
+        executablePath: chromiumPath || process.env.CHROMIUM_PATH || undefined
+      },
       catchQR: (base64Qr, asciiQR) => {
         console.log('QR Code gerado!');
         console.log('QR Code base64 disponível:', base64Qr ? 'Sim' : 'Não');
