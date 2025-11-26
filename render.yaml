@@ -30,7 +30,9 @@ services:
     region: oregon
     plan: free
     rootDir: cobranca-bot
-    buildCommand: npm install
+    buildCommand: |
+      npm install
+      npx puppeteer browsers install chrome
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
@@ -41,4 +43,8 @@ services:
         value: cobranca
       - key: BOT_PORT
         value: 3001
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/.cache/puppeteer
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: "false"
 
