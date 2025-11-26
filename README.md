@@ -21,7 +21,7 @@ Sistema completo de cobrança automatizada via WhatsApp usando Django e WPPConne
 
 ### 1. Clonar repositório
 ```bash
-git clone https://github.com/SEU_USUARIO/chatbot-cobranca.git
+git clone https://github.com/thiagomrlimaaa/chatbot-cobranca.git
 cd chatbot-cobranca
 ```
 
@@ -111,7 +111,7 @@ Este projeto é privado.
 
 ## 👤 Autor
 
-Luz Rastreamentos
+Thiago Lima
 
 ---
 
