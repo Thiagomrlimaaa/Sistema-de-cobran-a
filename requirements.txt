@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Django Core
 Django==4.2.11
 
@@ -20,3 +21,27 @@ requests==2.31.0
 # Static files (for production)
 whitenoise==6.6.0
 
+=======
+# Django Core
+Django==4.2.11
+
+# Django REST Framework
+djangorestframework==3.15.2
+
+# Celery for async tasks
+celery==5.3.4
+django-celery-beat==2.5.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# HTTP requests (for API calls)
+requests==2.31.0
+
+# Database (if using PostgreSQL in production)
+# psycopg2-binary==2.9.9
+
+# Static files (for production)
+whitenoise==6.6.0
+
+>>>>>>> e7b2f9a6bcc7a57e9eb1bcc852951ade51ac1656
