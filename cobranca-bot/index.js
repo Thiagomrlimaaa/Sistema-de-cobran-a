@@ -1171,9 +1171,8 @@ const server = app.listen(BOT_PORT, '0.0.0.0', () => {
   console.log(`  BOT_PORT: ${BOT_PORT}`);
   console.log(`  DJANGO_API_URL: ${DJANGO_API_URL}`);
   console.log(`  SESSION_NAME: ${SESSION_NAME}`);
-  console.log(`  PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'não definido'}`);
-  console.log(`  CHROMIUM_PATH: ${process.env.CHROMIUM_PATH || 'não definido'}`);
-  console.log(`  Chromium encontrado: ${chromiumPath || 'não encontrado'}`);
+  console.log(`  CHROMIUM_PATH (fixo): ${CHROMIUM_PATH}`);
+  console.log(`  Chromium existe: ${fs.existsSync(CHROMIUM_PATH) ? 'sim' : 'não'}`);
   console.log('');
   console.log('🚀 Iniciando bot automaticamente...');
   
