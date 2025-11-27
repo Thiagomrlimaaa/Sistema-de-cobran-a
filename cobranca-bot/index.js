@@ -333,13 +333,18 @@ async function initializeWhatsApp() {
   console.log('🔧 Chromium path:', CHROMIUM_PATH);
   console.log('🔧 Session name:', SESSION_NAME);
   
-  // Verificar se Chromium existe antes de iniciar
-  if (!fs.existsSync(CHROMIUM_PATH)) {
-    console.error(`❌ Chromium não encontrado em: ${CHROMIUM_PATH}`);
-    console.error('❌ Certifique-se de que o Chromium foi instalado no Build Command com: apt-get install -y chromium');
-    throw new Error(`Chromium não encontrado em ${CHROMIUM_PATH}`);
+  // Verificar se Chromium existe antes de iniciar (se foi encontrado)
+  if (CHROMIUM_PATH) {
+    if (fs.existsSync(CHROMIUM_PATH)) {
+      console.log(`✅ Chromium encontrado e verificado em: ${CHROMIUM_PATH}`);
+    } else {
+      console.error(`❌ Chromium não encontrado em: ${CHROMIUM_PATH}`);
+      console.error('❌ Tentando continuar com o padrão do Puppeteer...');
+    }
   } else {
-    console.log(`✅ Chromium encontrado em: ${CHROMIUM_PATH}`);
+    console.log('⚠️ Chromium não encontrado em nenhum local');
+    console.log('⚠️ Puppeteer tentará usar o Chrome padrão (pode falhar)');
+    console.log('⚠️ Certifique-se de que o Chrome foi instalado com: npx puppeteer browsers install chrome');
   }
   
   // Usar userDataDir único para evitar conflitos
