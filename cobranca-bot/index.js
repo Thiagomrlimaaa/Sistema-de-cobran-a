@@ -448,6 +448,8 @@ async function initializeWhatsApp() {
       ],
       puppeteerOptions: {
         headless: true,
+        // SOLUÇÃO DEFINITIVA: Usar /usr/bin/chromium (instalado via apt-get)
+        executablePath: chromiumPath || '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -479,7 +481,6 @@ async function initializeWhatsApp() {
           '--disable-logging',
           '--disable-notifications'
         ],
-        executablePath: chromiumPath || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || undefined,
         ignoreDefaultArgs: ['--disable-extensions'],
         timeout: 180000, // Aumentar timeout para 3 minutos
         protocolTimeout: 300000 // Aumentar protocolTimeout para 5 minutos (para operações pesadas como getAllContacts)
