@@ -9,52 +9,84 @@ require('dotenv').config();
 
 // Tentar encontrar Chromium no sistema
 function findChromium() {
-  const possiblePaths = [
-    process.env.PUPPETEER_EXECUTABLE_PATH,
-    process.env.CHROMIUM_PATH,
-    // Caminho do Puppeteer cache (Render)
-    process.env.PUPPETEER_CACHE_DIR ? `${process.env.PUPPETEER_CACHE_DIR}/chrome/linux-*/chrome-linux/chrome` : null,
-    // Caminho padrão do Puppeteer no node_modules
-    path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', 'linux-*', 'chrome-linux', 'chrome'),
-    // Caminhos do sistema
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable'
-  ];
+  console.log('🔍 Procurando Chrome/Chromium...');
+  console.log(`🔍 PUPPETEER_CACHE_DIR: ${process.env.PUPPETEER_CACHE_DIR || 'não definido'}`);
+  console.log(`🔍 PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'não definido'}`);
+  console.log(`🔍 CHROMIUM_PATH: ${process.env.CHROMIUM_PATH || 'não definido'}`);
+  
+  // Primeiro, tentar variáveis de ambiente
+  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
+    console.log(`✅ Chrome encontrado via PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+  
+  if (process.env.CHROMIUM_PATH && fs.existsSync(process.env.CHROMIUM_PATH)) {
+    console.log(`✅ Chrome encontrado via CHROMIUM_PATH: ${process.env.CHROMIUM_PATH}`);
+    return process.env.CHROMIUM_PATH;
+  }
   
   // Procurar Chrome do Puppeteer usando glob
   try {
     const { glob } = require('glob');
-    const puppeteerCache = process.env.PUPPETEER_CACHE_DIR || path.join(__dirname, 'node_modules', '.cache', 'puppeteer');
-    const chromePattern = path.join(puppeteerCache, 'chrome', '**', 'chrome-linux', 'chrome');
-    const chromeFiles = glob.sync(chromePattern, { absolute: true });
-    if (chromeFiles.length > 0 && fs.existsSync(chromeFiles[0])) {
-      console.log(`✅ Chrome do Puppeteer encontrado em: ${chromeFiles[0]}`);
-      return chromeFiles[0];
-    }
-  } catch (e) {
-    // Se glob não estiver disponível, continuar com outros caminhos
-  }
-  
-  for (const pathOption of possiblePaths) {
-    if (!pathOption) continue;
     
-    // Se for um caminho com wildcard, tentar expandir
-    if (pathOption.includes('*')) {
+    // Tentar vários padrões de busca
+    const searchPatterns = [
+      // Render cache
+      process.env.PUPPETEER_CACHE_DIR ? `${process.env.PUPPETEER_CACHE_DIR}/chrome/**/chrome-linux/chrome` : null,
+      // node_modules cache
+      path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux', 'chrome'),
+      // Caminho alternativo
+      '/opt/render/.cache/puppeteer/chrome/**/chrome-linux/chrome',
+      // Home directory
+      path.join(process.env.HOME || process.env.USERPROFILE || '/tmp', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux', 'chrome'),
+    ];
+    
+    for (const pattern of searchPatterns) {
+      if (!pattern) continue;
+      
       try {
-        const { glob } = require('glob');
-        const expanded = glob.sync(pathOption, { absolute: true });
-        if (expanded.length > 0 && fs.existsSync(expanded[0])) {
-          return expanded[0];
+        console.log(`🔍 Procurando em: ${pattern}`);
+        const chromeFiles = glob.sync(pattern, { absolute: true });
+        console.log(`🔍 Encontrados ${chromeFiles.length} arquivos`);
+        
+        for (const chromeFile of chromeFiles) {
+          if (fs.existsSync(chromeFile)) {
+            // Verificar se é executável
+            try {
+              fs.accessSync(chromeFile, fs.constants.F_OK | fs.constants.X_OK);
+              console.log(`✅ Chrome do Puppeteer encontrado em: ${chromeFile}`);
+              return chromeFile;
+            } catch (e) {
+              console.log(`⚠️ Arquivo encontrado mas não executável: ${chromeFile}`);
+            }
+          }
         }
       } catch (e) {
-        // Continuar
+        console.log(`⚠️ Erro ao procurar em ${pattern}: ${e.message}`);
       }
-    } else if (fs.existsSync(pathOption)) {
-      return pathOption;
+    }
+  } catch (e) {
+    console.log(`⚠️ Erro ao usar glob: ${e.message}`);
+  }
+  
+  // Tentar caminhos do sistema
+  const systemPaths = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/local/bin/chromium',
+    '/usr/local/bin/chromium-browser',
+  ];
+  
+  for (const systemPath of systemPaths) {
+    if (fs.existsSync(systemPath)) {
+      console.log(`✅ Chrome do sistema encontrado em: ${systemPath}`);
+      return systemPath;
     }
   }
+  
+  console.log('❌ Chrome não encontrado em nenhum local');
   return undefined;
 }
 
