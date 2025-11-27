@@ -11,24 +11,43 @@ require('dotenv').config();
 // O Render não permite apt-get, então usamos o Chrome do Puppeteer
 // Caminho padrão do Puppeteer no Render: /opt/render/.cache/puppeteer/chrome/
 function getChromiumPath() {
+  console.log('🔍 Procurando Chrome/Chromium...');
+  
   // Tentar caminho do Puppeteer no Render primeiro
   const puppeteerPaths = [
     '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome',
     '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux/chrome',
+    path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', 'linux-*', 'chrome-linux64', 'chrome'),
+    path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', 'linux-*', 'chrome-linux', 'chrome'),
   ];
   
   // Tentar encontrar usando glob
   try {
     const { glob } = require('glob');
     for (const pattern of puppeteerPaths) {
-      const files = glob.sync(pattern, { absolute: true });
-      if (files.length > 0 && fs.existsSync(files[0])) {
-        console.log(`✅ Chrome do Puppeteer encontrado em: ${files[0]}`);
-        return files[0];
+      try {
+        console.log(`🔍 Procurando em: ${pattern}`);
+        const files = glob.sync(pattern, { absolute: true });
+        console.log(`🔍 Encontrados ${files.length} arquivos`);
+        
+        for (const file of files) {
+          if (fs.existsSync(file)) {
+            // Verificar se é executável
+            try {
+              fs.accessSync(file, fs.constants.F_OK | fs.constants.X_OK);
+              console.log(`✅ Chrome do Puppeteer encontrado em: ${file}`);
+              return file;
+            } catch (e) {
+              console.log(`⚠️ Arquivo encontrado mas não executável: ${file}`);
+            }
+          }
+        }
+      } catch (e) {
+        console.log(`⚠️ Erro ao procurar em ${pattern}: ${e.message}`);
       }
     }
   } catch (e) {
-    console.log(`⚠️ Erro ao procurar Chrome do Puppeteer: ${e.message}`);
+    console.log(`⚠️ Erro ao usar glob: ${e.message}`);
   }
   
   // Fallback: tentar /usr/bin/chromium (se disponível)
@@ -38,11 +57,19 @@ function getChromiumPath() {
     return systemChromium;
   }
   
-  console.log('⚠️ Chrome não encontrado, Puppeteer tentará usar o padrão');
+  console.log('⚠️ Chrome não encontrado em nenhum local');
+  console.log('⚠️ Puppeteer tentará usar o Chrome padrão (pode falhar)');
   return undefined;
 }
 
 const CHROMIUM_PATH = getChromiumPath();
+
+// Log do resultado
+if (CHROMIUM_PATH) {
+  console.log(`✅ CHROMIUM_PATH definido como: ${CHROMIUM_PATH}`);
+} else {
+  console.log('⚠️ CHROMIUM_PATH não definido - Puppeteer usará o padrão');
+}
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
 const SESSION_NAME = process.env.WHATSAPP_SESSION || 'cobranca';
