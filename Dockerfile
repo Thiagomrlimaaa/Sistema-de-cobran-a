@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     wget \
     xdg-utils \
-    chromium \
+    chromium-browser \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -50,7 +50,7 @@ RUN set -ex && \
 COPY . /code
 
 # Puppeteer vai usar o Chromium do sistema
-ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium"
+ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium-browser"
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 # Instalar dependências do bot
