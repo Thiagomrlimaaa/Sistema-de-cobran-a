@@ -26,13 +26,15 @@ O Koyeb não permite rodar dois processos no mesmo container. Por isso, precisam
 
 **Variáveis de Ambiente:**
 ```
+WPPCONNECT_BOT_URL=https://coastal-leonanie-thiagocobrancas-2843762c.koyeb.app
 DJANGO_SECRET_KEY=xxxx
 DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=seu-django.koyeb.app
-DJANGO_API_URL=https://seu-django.koyeb.app/api
-WPPCONNECT_BOT_URL=https://seu-bot.koyeb.app
+DJANGO_ALLOWED_HOSTS=acute-crab-thiagocobrancas-328dda69.koyeb.app
+DJANGO_API_URL=https://acute-crab-thiagocobrancas-328dda69.koyeb.app/api
 DATABASE_URL=postgresql://... (se usar PostgreSQL)
 ```
+
+**⚠️ CRÍTICO:** A variável `WPPCONNECT_BOT_URL` **DEVE** estar configurada no app Django, caso contrário o Django tentará conectar em `localhost:3001` e falhará.
 
 ### 2. Criar App Bot
 
@@ -46,7 +48,7 @@ DATABASE_URL=postgresql://... (se usar PostgreSQL)
 ```
 PORT=3001
 BOT_PORT=3001
-DJANGO_API_URL=https://seu-django.koyeb.app/api
+DJANGO_API_URL=https://acute-crab-thiagocobrancas-328dda69.koyeb.app/api
 WHATSAPP_SESSION=cobranca
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
