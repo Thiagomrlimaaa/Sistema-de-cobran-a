@@ -24,9 +24,19 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Variáveis do Puppeteer
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-ENV CHROMIUM_PATH=/usr/bin/chromium
+# Encontrar o binário real do Chromium (pode estar em /usr/lib/chromium/chromium)
+RUN CHROMIUM_REAL=$(find /usr -name chromium -type f -executable -size +1M 2>/dev/null | head -1) && \
+    if [ -n "$CHROMIUM_REAL" ]; then \
+        echo "✅ Chromium binário encontrado em: $CHROMIUM_REAL"; \
+        echo "export CHROMIUM_REAL_PATH=$CHROMIUM_REAL" >> /etc/profile; \
+    else \
+        echo "⚠️ Usando /usr/bin/chromium como fallback"; \
+        echo "export CHROMIUM_REAL_PATH=/usr/bin/chromium" >> /etc/profile; \
+    fi
+
+# Variáveis do Puppeteer (serão sobrescritas pelo código se encontrar binário real)
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/lib/chromium/chromium
+ENV CHROMIUM_PATH=/usr/lib/chromium/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app

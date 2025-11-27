@@ -15,7 +15,50 @@ const DEFAULT_CHROME_PATH = '/usr/bin/chromium';
 function getChromiumPath() {
   console.log('🔍 Procurando Chrome/Chromium...');
 
-  // PRIORIDADE 1: Chromium instalado via apt-get no Koyeb (/usr/bin/chromium)
+  // PRIORIDADE 1: Chromium instalado via apt-get no Koyeb
+  // No Debian slim, /usr/bin/chromium pode ser um wrapper script
+  // Tentar encontrar o binário real
+  const possiblePaths = [
+    '/usr/lib/chromium/chromium', // Binário real no Debian
+    '/usr/lib/chromium-browser/chromium-browser', // Alternativa
+    '/usr/bin/chromium-browser', // Outro caminho comum
+    '/usr/bin/chromium', // Wrapper script (fallback)
+  ];
+
+  for (const testPath of possiblePaths) {
+    if (fs.existsSync(testPath)) {
+      try {
+        // Verificar se é um arquivo executável (não apenas um script pequeno)
+        const stats = fs.statSync(testPath);
+        // Se for maior que 1MB, provavelmente é o binário real
+        if (stats.isFile() && stats.size > 1000000) {
+          console.log(`✅ Chromium binário encontrado em: ${testPath} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
+          return testPath;
+        } else if (stats.isFile() && stats.size < 10000) {
+          // Se for pequeno, pode ser um wrapper script - tentar ler para encontrar o binário real
+          console.log(`⚠️ ${testPath} parece ser um wrapper script (${stats.size} bytes), procurando binário real...`);
+          try {
+            const content = fs.readFileSync(testPath, 'utf8');
+            // Procurar por referências ao binário real no script
+            const realPathMatch = content.match(/\/usr\/lib\/chromium[^"'\s]*/);
+            if (realPathMatch) {
+              const realPath = realPathMatch[0];
+              if (fs.existsSync(realPath)) {
+                console.log(`✅ Binário real encontrado via wrapper: ${realPath}`);
+                return realPath;
+              }
+            }
+          } catch (readErr) {
+            // Ignorar erro de leitura
+          }
+        }
+      } catch (statErr) {
+        // Continuar procurando
+      }
+    }
+  }
+
+  // Se encontrou /usr/bin/chromium mas é pequeno, usar mesmo assim (pode funcionar)
   if (fs.existsSync(DEFAULT_CHROME_PATH)) {
     console.log(`✅ Chromium do sistema encontrado em: ${DEFAULT_CHROME_PATH}`);
     return DEFAULT_CHROME_PATH;
