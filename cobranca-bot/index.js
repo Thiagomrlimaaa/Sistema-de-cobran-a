@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 // Tentar encontrar Chromium no sistema
@@ -11,15 +12,47 @@ function findChromium() {
   const possiblePaths = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
     process.env.CHROMIUM_PATH,
+    // Caminho do Puppeteer cache (Render)
+    process.env.PUPPETEER_CACHE_DIR ? `${process.env.PUPPETEER_CACHE_DIR}/chrome/linux-*/chrome-linux/chrome` : null,
+    // Caminho padrão do Puppeteer no node_modules
+    path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', 'linux-*', 'chrome-linux', 'chrome'),
+    // Caminhos do sistema
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome',
     '/usr/bin/google-chrome-stable'
   ];
   
-  for (const path of possiblePaths) {
-    if (path && fs.existsSync(path)) {
-      return path;
+  // Procurar Chrome do Puppeteer usando glob
+  try {
+    const { glob } = require('glob');
+    const puppeteerCache = process.env.PUPPETEER_CACHE_DIR || path.join(__dirname, 'node_modules', '.cache', 'puppeteer');
+    const chromePattern = path.join(puppeteerCache, 'chrome', '**', 'chrome-linux', 'chrome');
+    const chromeFiles = glob.sync(chromePattern, { absolute: true });
+    if (chromeFiles.length > 0 && fs.existsSync(chromeFiles[0])) {
+      console.log(`✅ Chrome do Puppeteer encontrado em: ${chromeFiles[0]}`);
+      return chromeFiles[0];
+    }
+  } catch (e) {
+    // Se glob não estiver disponível, continuar com outros caminhos
+  }
+  
+  for (const pathOption of possiblePaths) {
+    if (!pathOption) continue;
+    
+    // Se for um caminho com wildcard, tentar expandir
+    if (pathOption.includes('*')) {
+      try {
+        const { glob } = require('glob');
+        const expanded = glob.sync(pathOption, { absolute: true });
+        if (expanded.length > 0 && fs.existsSync(expanded[0])) {
+          return expanded[0];
+        }
+      } catch (e) {
+        // Continuar
+      }
+    } else if (fs.existsSync(pathOption)) {
+      return pathOption;
     }
   }
   return undefined;
