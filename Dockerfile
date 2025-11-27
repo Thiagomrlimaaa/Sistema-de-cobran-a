@@ -1,69 +1,66 @@
-ARG PYTHON_VERSION=3.11-slim
+FROM python:3.11-slim
 
-FROM python:${PYTHON_VERSION}
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# install psycopg2 dependencies, Node.js, and Chromium dependencies
+# Atualiza sistema e instala dependências do Chromium + Node
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gcc \
     curl \
-    ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
+    wget \
+    gnupg \
+    build-essential \
     libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
     libnss3 \
-    libu2f-udev \
-    libvulkan1 \
-    libx11-6 \
+    libgconf-2-4 \
+    libasound2 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libx11-xcb1 \
     libxcomposite1 \
     libxdamage1 \
+    libxrandr2 \
     libxext6 \
     libxfixes3 \
-    libxrandr2 \
-    wget \
-    xdg-utils \
-    chromium-browser \
+    libgbm1 \
+    libpango1.0-0 \
+    libcups2 \
+    libxshmfence1 \
+    chromium \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /code
+# Caminho do Chromium para Puppeteer
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV CHROMIUM_PATH=/usr/bin/chromium
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
-WORKDIR /code
+# Pasta do projeto
+WORKDIR /app
 
-COPY requirements.txt /tmp/requirements.txt
-RUN set -ex && \
-    pip install --upgrade pip && \
-    pip install -r /tmp/requirements.txt && \
-    rm -rf /root/.cache/
-COPY . /code
+# Instala dependências Python
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Puppeteer vai usar o Chromium do sistema
-ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium-browser"
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Copia projeto inteiro
+COPY . .
 
-# Instalar dependências do bot
-RUN cd /code/cobranca-bot && npm install
+# Instala dependências do bot
+WORKDIR /app/cobranca-bot
+RUN npm install
 
-RUN python manage.py collectstatic --noinput
+# Volta para raiz
+WORKDIR /app
 
-# Tornar script executável
-RUN chmod +x /code/start_both.sh
+# Script para rodar Django + Bot
+RUN echo '#!/bin/sh\n\
+python manage.py migrate\n\
+python manage.py collectstatic --noinput\n\
+node cobranca-bot/index.js &\n\
+gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 cobranca_chatbot.wsgi:application\n' > start.sh
 
-# Expor portas (Railway usa PORT dinamicamente, mas expomos ambas para compatibilidade)
+RUN chmod +x start.sh
+
 EXPOSE 8000 3001
 
-# Railway vai usar PORT para o serviço principal (Django)
-# O bot roda na porta 3001 internamente
-CMD ["/code/start_both.sh"]
+CMD ["./start.sh"]

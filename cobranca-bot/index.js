@@ -7,15 +7,15 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// SOLUÇÃO: Usar Chrome instalado via apt-get no Render
-// O Render instala Chromium via render-build.sh no caminho /usr/bin/chromium-browser
-const DEFAULT_CHROME_PATH = '/usr/bin/chromium-browser';
+// SOLUÇÃO: Usar Chrome instalado via apt-get no Koyeb
+// O Koyeb instala Chromium no caminho /usr/bin/chromium
+const DEFAULT_CHROME_PATH = '/usr/bin/chromium';
 
 // Caminho do cache do Puppeteer no Render
 function getChromiumPath() {
   console.log('🔍 Procurando Chrome/Chromium...');
 
-  // PRIORIDADE 1: Chromium instalado via apt-get no Render (/usr/bin/chromium-browser)
+  // PRIORIDADE 1: Chromium instalado via apt-get no Koyeb (/usr/bin/chromium)
   if (fs.existsSync(DEFAULT_CHROME_PATH)) {
     console.log(`✅ Chromium do sistema encontrado em: ${DEFAULT_CHROME_PATH}`);
     return DEFAULT_CHROME_PATH;
@@ -98,8 +98,8 @@ function getChromiumPath() {
   
   // Se chegou aqui, não encontrou Chromium em nenhum lugar
   console.log('⚠️ Chrome não encontrado em nenhum local');
-  console.log('⚠️ Tentando usar /usr/bin/chromium-browser mesmo assim (pode falhar se não estiver instalado)');
-  // Retornar /usr/bin/chromium-browser como fallback (será instalado pelo render-build.sh)
+  console.log('⚠️ Tentando usar /usr/bin/chromium mesmo assim (pode falhar se não estiver instalado)');
+  // Retornar /usr/bin/chromium como fallback (será instalado pelo Dockerfile)
   return DEFAULT_CHROME_PATH;
 }
 
@@ -454,9 +454,9 @@ async function initializeWhatsApp() {
       ],
       puppeteerOptions: {
         headless: true,
-        // SEMPRE usar /usr/bin/chromium-browser (instalado via render-build.sh)
-        // puppeteer não baixa Chrome quando PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true, então precisamos especificar o caminho
-        executablePath: '/usr/bin/chromium-browser',
+        // SEMPRE usar /usr/bin/chromium (instalado via Dockerfile no Koyeb)
+        // puppeteer não baixa Chrome quando PUPPETEER_SKIP_DOWNLOAD=true, então precisamos especificar o caminho
+        executablePath: '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
