@@ -93,9 +93,13 @@ function findChromium() {
 const chromiumPath = findChromium();
 if (chromiumPath) {
   console.log(`✅ Chromium encontrado em: ${chromiumPath}`);
+  // Definir variável de ambiente para o Puppeteer usar
+  process.env.PUPPETEER_EXECUTABLE_PATH = chromiumPath;
+  console.log(`✅ PUPPETEER_EXECUTABLE_PATH definido como: ${chromiumPath}`);
 } else {
-  console.log('⚠️ Chromium não encontrado no sistema, tentando usar Chrome do Puppeteer');
-  console.log('⚠️ Se o bot não funcionar, instale Chromium no sistema');
+  console.log('⚠️ Chromium não encontrado no sistema');
+  console.log('⚠️ Tentando usar Chrome padrão do Puppeteer (pode falhar)');
+  console.log('⚠️ Certifique-se de que o Chrome foi instalado com: npx puppeteer browsers install chrome');
 }
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
