@@ -67,8 +67,17 @@ const CHROMIUM_PATH = getChromiumPath();
 // Log do resultado
 if (CHROMIUM_PATH) {
   console.log(`✅ CHROMIUM_PATH definido como: ${CHROMIUM_PATH}`);
+  // Definir variável de ambiente para o Puppeteer usar
+  process.env.PUPPETEER_EXECUTABLE_PATH = CHROMIUM_PATH;
+  console.log(`✅ PUPPETEER_EXECUTABLE_PATH definido como: ${CHROMIUM_PATH}`);
 } else {
   console.log('⚠️ CHROMIUM_PATH não definido - Puppeteer usará o padrão');
+}
+
+// Configurar PUPPETEER_CACHE_DIR se não estiver definido
+if (!process.env.PUPPETEER_CACHE_DIR) {
+  process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
+  console.log(`✅ PUPPETEER_CACHE_DIR definido como: ${process.env.PUPPETEER_CACHE_DIR}`);
 }
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
