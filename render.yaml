@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 services:
   # Servidor Django (Web Service)
   - type: web
@@ -32,58 +31,7 @@ services:
     plan: free
     rootDir: cobranca-bot
     buildCommand: |
-      npm install
-      npx puppeteer browsers install chrome || echo "Chrome installation failed, will use system Chromium"
-    startCommand: npm start
-    envVars:
-      - key: NODE_VERSION
-        value: 18.x
-      - key: DJANGO_API_URL
-        value: https://django-server.onrender.com/api
-      - key: WHATSAPP_SESSION
-        value: cobranca
-      - key: BOT_PORT
-        value: 3001
-      - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/.cache/puppeteer
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "false"
-
-=======
-services:
-  # Servidor Django (Web Service)
-  - type: web
-    name: django-server
-    env: python
-    region: oregon
-    plan: free
-    buildCommand: |
-      pip install -r requirements.txt
-      python manage.py migrate
-    startCommand: python manage.py runserver 0.0.0.0:$PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: DJANGO_SECRET_KEY
-        generateValue: true
-      - key: DJANGO_DEBUG
-        value: "False"
-      - key: DJANGO_ALLOWED_HOSTS
-        value: django-server.onrender.com
-      - key: WPPCONNECT_BOT_URL
-        value: https://whatsapp-bot.onrender.com
-      - key: DJANGO_API_URL
-        value: https://django-server.onrender.com/api
-
-  # Bot WhatsApp (Background Worker)
-  - type: worker
-    name: whatsapp-bot
-    env: node
-    region: oregon
-    plan: free
-    rootDir: cobranca-bot
-    buildCommand: |
-      ./render-build.sh
+      ../render-build.sh
       npm install
     startCommand: npm start
     envVars:
@@ -99,5 +47,3 @@ services:
         value: /opt/render/.cache/puppeteer
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: "true"
-
->>>>>>> e7b2f9a6bcc7a57e9eb1bcc852951ade51ac1656

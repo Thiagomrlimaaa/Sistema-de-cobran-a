@@ -7,22 +7,25 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// SOLUÇÃO: Usar Chrome instalado pelo Puppeteer no Render
-// O Render não permite apt-get, então usamos o Chrome do Puppeteer
-// Caminho padrão do Chrome instalado via apt (Render): /usr/bin/chromium
-const DEFAULT_CHROME_PATH =
-  process.env.RENDER_CHROME_PATH ||
-  process.env.CHROMIUM_PATH ||
-  process.env.PUPPETEER_EXECUTABLE_PATH ||
-  '/usr/bin/chromium';
+// SOLUÇÃO: Usar Chrome instalado via apt-get no Render
+// O Render instala Chromium via render-build.sh no caminho /usr/bin/chromium
+const DEFAULT_CHROME_PATH = '/usr/bin/chromium';
 
 // Caminho do cache do Puppeteer no Render
 function getChromiumPath() {
   console.log('🔍 Procurando Chrome/Chromium...');
 
-  if (DEFAULT_CHROME_PATH && fs.existsSync(DEFAULT_CHROME_PATH)) {
-    console.log(`✅ Chromium padrão encontrado em: ${DEFAULT_CHROME_PATH}`);
+  // PRIORIDADE 1: Chromium instalado via apt-get no Render (/usr/bin/chromium)
+  if (fs.existsSync(DEFAULT_CHROME_PATH)) {
+    console.log(`✅ Chromium do sistema encontrado em: ${DEFAULT_CHROME_PATH}`);
     return DEFAULT_CHROME_PATH;
+  }
+  
+  // Verificar variáveis de ambiente (fallback)
+  const envPath = process.env.CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (envPath && fs.existsSync(envPath)) {
+    console.log(`✅ Chromium de variável de ambiente encontrado em: ${envPath}`);
+    return envPath;
   }
   
   // Primeiro, tentar listar o diretório do cache do Puppeteer
@@ -93,15 +96,11 @@ function getChromiumPath() {
     console.log(`⚠️ Erro ao listar cache: ${e.message}`);
   }
   
-  // Fallback: tentar /usr/bin/chromium (se disponível)
-  if (DEFAULT_CHROME_PATH && fs.existsSync(DEFAULT_CHROME_PATH)) {
-    console.log(`✅ Chromium do sistema encontrado em: ${DEFAULT_CHROME_PATH}`);
-    return DEFAULT_CHROME_PATH;
-  }
-  
+  // Se chegou aqui, não encontrou Chromium em nenhum lugar
   console.log('⚠️ Chrome não encontrado em nenhum local');
-  console.log('⚠️ Puppeteer tentará usar o Chrome padrão (pode falhar)');
-  return undefined;
+  console.log('⚠️ Tentando usar /usr/bin/chromium mesmo assim (pode falhar se não estiver instalado)');
+  // Retornar /usr/bin/chromium como fallback (será instalado pelo render-build.sh)
+  return DEFAULT_CHROME_PATH;
 }
 
 const CHROMIUM_PATH = getChromiumPath();
@@ -455,9 +454,9 @@ async function initializeWhatsApp() {
       ],
       puppeteerOptions: {
         headless: true,
-        // Usar Chrome encontrado (do Puppeteer ou sistema)
-        // Se CHROMIUM_PATH estiver definido, usar ele; senão deixar undefined para Puppeteer usar o padrão
-        executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        // SEMPRE usar /usr/bin/chromium (instalado via render-build.sh)
+        // Isso garante que o Puppeteer use o Chrome instalado pelo apt-get no Render
+        executablePath: CHROMIUM_PATH || '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
