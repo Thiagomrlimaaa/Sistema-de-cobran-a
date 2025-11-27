@@ -248,6 +248,11 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))  # Remove duplicatas
 CSRF_USE_SESSIONS = False  # Usar cookies ao invés de sessão para CSRF
 
+# Configurações para proxy reverso (Koyeb usa proxy)
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Debug: Log CSRF_TRUSTED_ORIGINS (apenas em desenvolvimento)
 if DEBUG:
     print(f"🔒 CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
