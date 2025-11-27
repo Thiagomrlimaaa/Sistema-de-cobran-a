@@ -1,0 +1,122 @@
+================================================================================
+  CONFIGURAR BOT WHATSAPP NO RENDER.COM
+================================================================================
+
+O bot precisa ser configurado como um Background Worker separado no Render.
+
+================================================================================
+  PASSO A PASSO
+================================================================================
+
+PASSO 1: CRIAR BACKGROUND WORKER
+----------------------------------
+1. No painel do Render, clique em "New +"
+2. Selecione "Background Worker"
+
+PASSO 2: CONECTAR REPOSITÓRIO
+------------------------------
+1. Conecte o mesmo repositório: https://github.com/Thiagomrlimaaa/Sistema-de-cobran-a
+2. Certifique-se de que está conectado ao mesmo repositório do Django
+
+PASSO 3: CONFIGURAR CAMPOS
+---------------------------
+Preencha os campos:
+
+Nome:
+  whatsapp-bot
+
+Região:
+  Ohio (Leste dos EUA)  (mesma região do Django)
+
+Branch:
+  principal  (ou main, dependendo do seu repositório)
+
+Diretório raiz:
+  cobranca-bot
+
+Linguagem:
+  Node
+
+Comando de construção:
+  npm install
+
+Comando de inicialização:
+  npm start
+
+PASSO 4: VARIÁVEIS DE AMBIENTE
+-------------------------------
+Adicione estas variáveis de ambiente:
+
+DJANGO_API_URL:
+  https://sistema-de-cobranca-kah1.onrender.com/api
+  (ATUALIZE com a URL real do seu Django)
+
+WHATSAPP_SESSION:
+  cobranca
+
+BOT_PORT:
+  3001
+
+NODE_VERSION:
+  18.x
+
+PUPPETEER_CACHE_DIR:
+  /opt/render/.cache/puppeteer
+
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD:
+  false
+
+PASSO 5: CRIAR SERVIÇO
+----------------------
+Clique em "Create Background Worker"
+
+================================================================================
+  IMPORTANTE
+================================================================================
+
+1. O bot precisa estar na MESMA REGIÃO do Django para comunicação rápida
+2. A URL do DJANGO_API_URL deve ser a URL real do seu serviço Django
+3. O bot vai criar os tokens automaticamente na primeira execução
+4. Você precisará escanear o QR Code quando o bot iniciar
+
+================================================================================
+  APÓS CRIAR O WORKER
+================================================================================
+
+1. O Render vai fazer deploy automaticamente
+2. Verifique os logs do worker
+3. Quando aparecer o QR Code nos logs, acesse o dashboard do Django
+4. Vá em "WhatsApp Bot" → "Iniciar Bot" → Escaneie o QR Code
+
+================================================================================
+  TROUBLESHOOTING
+================================================================================
+
+ERRO: "Cannot find module"
+- Verifique se o diretório raiz está correto: cobranca-bot
+- Verifique se package.json está no diretório correto
+
+ERRO: "Port already in use"
+- Verifique se BOT_PORT está configurado como 3001
+- O Render pode usar PORT automaticamente, mas BOT_PORT tem prioridade
+
+ERRO: "Cannot connect to Django"
+- Verifique se DJANGO_API_URL está correto
+- Verifique se o Django está rodando
+- Verifique se ambos estão na mesma região
+
+ERRO: "Chromium not found"
+- O Render tem Chromium pré-instalado
+- O bot vai tentar encontrar automaticamente
+- Se não funcionar, pode ser necessário instalar no build command
+
+================================================================================
+  BUILD COMMAND AVANÇADO (OPCIONAL)
+================================================================================
+
+Se o Chromium não funcionar, use este build command:
+
+  npm install && npx puppeteer browsers install chrome || echo "Chrome installation failed, will use system Chromium"
+
+================================================================================
+

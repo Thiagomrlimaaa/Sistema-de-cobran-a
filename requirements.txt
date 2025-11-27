@@ -23,3 +23,6 @@ whitenoise==6.6.0
 
 # Gunicorn (for production server)
 gunicorn==21.2.0
+
+# Para rodar bot Node.js junto com Django (opcional)
+# Não precisa instalar nada extra, usa subprocess
