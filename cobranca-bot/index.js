@@ -7,117 +7,15 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Tentar encontrar Chromium no sistema
-function findChromium() {
-  console.log('🔍 Procurando Chrome/Chromium...');
-  console.log(`🔍 PUPPETEER_CACHE_DIR: ${process.env.PUPPETEER_CACHE_DIR || 'não definido'}`);
-  console.log(`🔍 PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'não definido'}`);
-  console.log(`🔍 CHROMIUM_PATH: ${process.env.CHROMIUM_PATH || 'não definido'}`);
-  
-  // PRIMEIRO: Tentar Chromium do sistema (se disponível)
-  const systemChromium = '/usr/bin/chromium';
-  if (fs.existsSync(systemChromium)) {
-    console.log(`✅ Chromium do sistema encontrado em: ${systemChromium}`);
-    return systemChromium;
-  }
-  
-  // NOTA: No Render, apt-get não funciona (sistema somente leitura)
-  // Então vamos usar o Chrome instalado pelo Puppeteer
-  
-  // Segundo: tentar variáveis de ambiente
-  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
-    console.log(`✅ Chrome encontrado via PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
-    return process.env.PUPPETEER_EXECUTABLE_PATH;
-  }
-  
-  if (process.env.CHROMIUM_PATH && fs.existsSync(process.env.CHROMIUM_PATH)) {
-    console.log(`✅ Chrome encontrado via CHROMIUM_PATH: ${process.env.CHROMIUM_PATH}`);
-    return process.env.CHROMIUM_PATH;
-  }
-  
-  // Procurar Chrome do Puppeteer usando glob
-  try {
-    const { glob } = require('glob');
-    
-    // Tentar vários padrões de busca (chrome-linux e chrome-linux64)
-    // Priorizar chrome-linux64 (versão mais recente)
-    const searchPatterns = [
-      // Render cache - chrome-linux64 (versão mais recente) - PRIORIDADE ALTA
-      process.env.PUPPETEER_CACHE_DIR ? `${process.env.PUPPETEER_CACHE_DIR}/chrome/**/chrome-linux64/chrome` : null,
-      // Caminho direto do Render (baseado no log do usuário)
-      '/opt/render/.cache/puppeteer/chrome/**/chrome-linux64/chrome',
-      // Render cache - chrome-linux (versão antiga)
-      process.env.PUPPETEER_CACHE_DIR ? `${process.env.PUPPETEER_CACHE_DIR}/chrome/**/chrome-linux/chrome` : null,
-      // Caminho alternativo - chrome-linux
-      '/opt/render/.cache/puppeteer/chrome/**/chrome-linux/chrome',
-      // node_modules cache - chrome-linux64
-      path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux64', 'chrome'),
-      // node_modules cache - chrome-linux
-      path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux', 'chrome'),
-      // Home directory - chrome-linux64
-      path.join(process.env.HOME || process.env.USERPROFILE || '/tmp', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux64', 'chrome'),
-      // Home directory - chrome-linux
-      path.join(process.env.HOME || process.env.USERPROFILE || '/tmp', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux', 'chrome'),
-    ];
-    
-    for (const pattern of searchPatterns) {
-      if (!pattern) continue;
-      
-      try {
-        console.log(`🔍 Procurando em: ${pattern}`);
-        const chromeFiles = glob.sync(pattern, { absolute: true });
-        console.log(`🔍 Encontrados ${chromeFiles.length} arquivos`);
-        
-        for (const chromeFile of chromeFiles) {
-          if (fs.existsSync(chromeFile)) {
-            // Verificar se é executável
-            try {
-              fs.accessSync(chromeFile, fs.constants.F_OK | fs.constants.X_OK);
-              console.log(`✅ Chrome do Puppeteer encontrado em: ${chromeFile}`);
-              return chromeFile;
-            } catch (e) {
-              console.log(`⚠️ Arquivo encontrado mas não executável: ${chromeFile}`);
-            }
-          }
-        }
-      } catch (e) {
-        console.log(`⚠️ Erro ao procurar em ${pattern}: ${e.message}`);
-      }
-    }
-  } catch (e) {
-    console.log(`⚠️ Erro ao usar glob: ${e.message}`);
-  }
-  
-  // Tentar outros caminhos do sistema (já verificamos /usr/bin/chromium acima)
-  const systemPaths = [
-    '/usr/bin/chromium-browser',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/local/bin/chromium',
-    '/usr/local/bin/chromium-browser',
-  ];
-  
-  for (const systemPath of systemPaths) {
-    if (fs.existsSync(systemPath)) {
-      console.log(`✅ Chrome do sistema encontrado em: ${systemPath}`);
-      return systemPath;
-    }
-  }
-  
-  console.log('❌ Chrome não encontrado em nenhum local');
-  return undefined;
-}
+// SOLUÇÃO DEFINITIVA: Usar APENAS /usr/bin/chromium (instalado via apt-get)
+// Removida toda a lógica de busca do Chrome do Puppeteer
+const CHROMIUM_PATH = '/usr/bin/chromium';
 
-const chromiumPath = findChromium();
-if (chromiumPath) {
-  console.log(`✅ Chromium encontrado em: ${chromiumPath}`);
-  // Definir variável de ambiente para o Puppeteer usar
-  process.env.PUPPETEER_EXECUTABLE_PATH = chromiumPath;
-  console.log(`✅ PUPPETEER_EXECUTABLE_PATH definido como: ${chromiumPath}`);
+if (fs.existsSync(CHROMIUM_PATH)) {
+  console.log(`✅ Chromium encontrado em: ${CHROMIUM_PATH}`);
 } else {
-  console.log('⚠️ Chromium não encontrado no sistema');
-  console.log('⚠️ Tentando usar Chrome padrão do Puppeteer (pode falhar)');
-  console.log('⚠️ Certifique-se de que o Chrome foi instalado com: npx puppeteer browsers install chrome');
+  console.log(`⚠️ Chromium não encontrado em: ${CHROMIUM_PATH}`);
+  console.log('⚠️ Certifique-se de que o Chromium foi instalado no Build Command com: apt-get install -y chromium');
 }
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
@@ -379,19 +277,16 @@ async function initializeWhatsApp() {
 
   // Log de debug
   console.log('🔧 Iniciando WPPConnect...');
-  console.log('🔧 Chromium path:', chromiumPath || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || 'não definido');
+  console.log('🔧 Chromium path:', CHROMIUM_PATH);
   console.log('🔧 Session name:', SESSION_NAME);
-  console.log('🔧 Verificando se Chromium existe...');
   
   // Verificar se Chromium existe antes de iniciar
-  const execPath = chromiumPath || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH;
-  if (execPath && !fs.existsSync(execPath)) {
-    console.error(`❌ Chromium não encontrado em: ${execPath}`);
-    console.error('❌ Tentando continuar sem caminho específico...');
-  } else if (execPath) {
-    console.log(`✅ Chromium encontrado em: ${execPath}`);
+  if (!fs.existsSync(CHROMIUM_PATH)) {
+    console.error(`❌ Chromium não encontrado em: ${CHROMIUM_PATH}`);
+    console.error('❌ Certifique-se de que o Chromium foi instalado no Build Command com: apt-get install -y chromium');
+    throw new Error(`Chromium não encontrado em ${CHROMIUM_PATH}`);
   } else {
-    console.log('⚠️ Caminho do Chromium não definido, usando padrão do Puppeteer');
+    console.log(`✅ Chromium encontrado em: ${CHROMIUM_PATH}`);
   }
   
   // Usar userDataDir único para evitar conflitos
@@ -451,8 +346,8 @@ async function initializeWhatsApp() {
       ],
       puppeteerOptions: {
         headless: true,
-        // Usar chromiumPath encontrado (prioriza Chrome do Puppeteer, depois /usr/bin/chromium se disponível)
-        executablePath: chromiumPath || undefined, // undefined = Puppeteer usa o Chrome padrão
+        // SOLUÇÃO DEFINITIVA: Usar APENAS /usr/bin/chromium (instalado via apt-get)
+        executablePath: CHROMIUM_PATH,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
