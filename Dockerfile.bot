@@ -2,9 +2,10 @@ FROM node:18-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar Chromium real (chromium-browser) + dependências obrigatórias
+# Instalar Chromium real + dependências obrigatórias
+# No Debian Bookworm, o pacote correto é "chromium" (não chromium-browser)
 RUN apt-get update && apt-get install -y \
-    chromium-browser \
+    chromium \
     fonts-liberation \
     libnss3 \
     libatk1.0-0 \
@@ -26,14 +27,26 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Verificar onde o Chromium foi instalado e garantir permissões
+RUN CHROMIUM_BIN=$(which chromium || find /usr -name chromium -type f -executable -size +1M 2>/dev/null | head -1) && \
+    if [ -n "$CHROMIUM_BIN" ]; then \
+        echo "✅ Chromium encontrado em: $CHROMIUM_BIN"; \
+        chmod +x "$CHROMIUM_BIN" && \
+        echo "✅ Permissões garantidas"; \
+    else \
+        echo "⚠️ Chromium não encontrado, usando /usr/bin/chromium como padrão"; \
+        CHROMIUM_BIN="/usr/bin/chromium"; \
+    fi && \
+    echo "export CHROMIUM_REAL_PATH=$CHROMIUM_BIN" >> /etc/profile
+
 # Forçar Chromium sem sandbox e sem software rasterizer (OBRIGATÓRIO NO KOYEB)
 RUN mkdir -p /etc/chromium.d && \
     echo 'CHROMIUM_FLAGS="--no-sandbox --disable-software-rasterizer"' > /etc/chromium.d/no-sandbox.conf && \
     echo "✅ Sandbox do sistema desativado em /etc/chromium.d/no-sandbox.conf"
 
-# Exporta caminho real do Chromium
-ENV CHROMIUM_PATH=/usr/bin/chromium-browser
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Exporta caminho do Chromium (no Debian Bookworm geralmente é /usr/bin/chromium)
+ENV CHROMIUM_PATH=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app
