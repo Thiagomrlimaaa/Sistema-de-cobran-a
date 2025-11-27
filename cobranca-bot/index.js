@@ -764,6 +764,23 @@ async function disconnect() {
 
 // ========== ENDPOINTS DA API ==========
 
+// Rota raiz - informações do bot
+app.get('/', (req, res) => {
+  res.json({
+    service: 'WhatsApp Bot (WPPConnect)',
+    status: botState.status,
+    version: '1.0.0',
+    endpoints: {
+      'GET /status': 'Status do bot',
+      'POST /start': 'Iniciar bot',
+      'POST /stop': 'Parar bot',
+      'GET /qr': 'Obter QR Code',
+      'POST /send': 'Enviar mensagem',
+      'POST /send-bulk': 'Enviar mensagem em massa'
+    }
+  });
+});
+
 // Status do bot
 app.get('/status', (req, res) => {
   // Garantir que o QR Code está atualizado no estado
