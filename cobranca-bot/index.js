@@ -454,9 +454,8 @@ async function initializeWhatsApp() {
       ],
       puppeteerOptions: {
         headless: true,
-        // SEMPRE usar /usr/bin/chromium (instalado via Dockerfile no Koyeb)
-        // puppeteer não baixa Chrome quando PUPPETEER_SKIP_DOWNLOAD=true, então precisamos especificar o caminho
-        executablePath: '/usr/bin/chromium',
+        // Usar o caminho do Chromium detectado (ou variável de ambiente)
+        executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -605,6 +604,37 @@ async function initializeWhatsApp() {
       console.error('❌ Stack trace:', err.stack);
       console.error('❌ Tipo do erro:', err.constructor.name);
       console.error('❌ Mensagem completa:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+      
+      // Verificar se é erro de socket hang up
+      if (err.message && (err.message.includes('socket hang up') || err.message.includes('ECONNRESET') || err.message.includes('ETIMEDOUT'))) {
+        console.error('❌ Erro de conexão detectado (socket hang up)');
+        console.error('❌ Possíveis causas:');
+        console.error('   1. Chromium não está executando corretamente');
+        console.error('   2. Chromium não foi encontrado em:', CHROMIUM_PATH);
+        console.error('   3. Problemas de permissões ou sandbox');
+        console.error('   4. Timeout ao iniciar o navegador');
+        
+        // Verificar se Chromium existe e é executável
+        if (CHROMIUM_PATH) {
+          try {
+            const stats = fs.statSync(CHROMIUM_PATH);
+            console.log(`✅ Chromium existe: ${CHROMIUM_PATH}`);
+            console.log(`   Tamanho: ${stats.size} bytes`);
+            console.log(`   É arquivo: ${stats.isFile()}`);
+            
+            // Tentar verificar se é executável
+            try {
+              fs.accessSync(CHROMIUM_PATH, fs.constants.X_OK);
+              console.log('✅ Chromium é executável');
+            } catch (permErr) {
+              console.error('❌ Chromium NÃO é executável!');
+              console.error('   Isso pode causar o erro "socket hang up"');
+            }
+          } catch (statErr) {
+            console.error(`❌ Erro ao verificar Chromium: ${statErr.message}`);
+          }
+        }
+      }
       
       // Se o erro for sobre navegador já em execução, tentar limpar
       if (err.message && (err.message.includes('já está em execução') || err.message.includes('already running'))) {
