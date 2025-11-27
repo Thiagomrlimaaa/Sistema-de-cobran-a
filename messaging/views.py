@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -175,6 +177,7 @@ class WhatsAppHealthView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class BotControlView(APIView):
     """
     API para controlar o bot Node.js (WPPConnect).
@@ -253,6 +256,7 @@ class BotControlView(APIView):
             )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class BotQRCodeView(APIView):
     """Obter QR Code do bot"""
     permission_classes = [IsAuthenticated]
