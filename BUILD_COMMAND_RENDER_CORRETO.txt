@@ -4,7 +4,7 @@
 
 Copie e cole este comando no campo "Build Command" do Render:
 
-pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_users && cd cobranca-bot && npm install && npx puppeteer browsers install chrome && cd ..
+pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_users && cd cobranca-bot && npm install && npx puppeteer browsers install chrome && echo "Chrome instalado em: $(find /opt/render/.cache/puppeteer -name chrome -type f 2>/dev/null | head -1)" && cd ..
 
 IMPORTANTE: 
 - O Render NÃO permite apt-get (sistema somente leitura)

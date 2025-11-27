@@ -17,7 +17,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.21.2",
-    "glob": "^10.3.10"
+    "glob": "^10.3.10",
+    "puppeteer": "^21.11.0"
   },
   "puppeteer": {
     "skipDownload": false
