@@ -3,6 +3,10 @@
 # Aplicar migrações (ignora erro se não houver banco configurado)
 python manage.py migrate --noinput || echo "⚠️ Migrações não aplicadas (pode ser normal se não houver DATABASE_URL)"
 
+# Criar superusuários (jeff e thiago com senha 1)
+echo "👥 Criando superusuários..."
+python manage.py create_users || echo "⚠️ Erro ao criar usuários (pode ser normal se não houver DATABASE_URL)"
+
 # Iniciar bot em background
 echo "🚀 Iniciando bot WhatsApp..."
 cd /app/cobranca-bot
