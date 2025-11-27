@@ -56,17 +56,18 @@ else:
                 ALLOWED_HOSTS = ["acute-crab-thiagocobrancas-328dda69.koyeb.app", "localhost", "127.0.0.1"]
 
 # CSRF Trusted Origins
-CSRF_TRUSTED_ORIGINS = []
+# IMPORTANTE: Adicionar domínio do Koyeb PRIMEIRO (sempre)
+CSRF_TRUSTED_ORIGINS = [
+    "https://acute-crab-thiagocobrancas-328dda69.koyeb.app",
+]
 
-# Primeiro, verificar se está definido via variável de ambiente
+# Verificar se está definido via variável de ambiente (adicionar aos existentes)
 csrf_env = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 if csrf_env:
-    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_env.split() if origin.strip()]
-
-# Adicionar domínio do Koyeb SEMPRE (prioridade)
-koyeb_domain = "https://acute-crab-thiagocobrancas-328dda69.koyeb.app"
-if koyeb_domain not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(koyeb_domain)
+    for origin in csrf_env.split():
+        origin = origin.strip()
+        if origin and origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Verificar variável de ambiente do Koyeb também
 koyeb_url = os.getenv("KOYEB_APP_URL", "")
@@ -244,8 +245,18 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = not DEBUG  # True em produção (HTTPS)
 CSRF_COOKIE_HTTPONLY = False  # False para permitir JavaScript ler o cookie (necessário para AJAX)
 CSRF_COOKIE_SAMESITE = 'Lax'
+# Garantir que o domínio do Koyeb está SEMPRE incluído (não pode ser removido)
+koyeb_domain_required = "https://acute-crab-thiagocobrancas-328dda69.koyeb.app"
+if koyeb_domain_required not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(koyeb_domain_required)
+
 # Garantir que CSRF funciona mesmo com proxy reverso - remover duplicatas
 CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))  # Remove duplicatas
+
+# Garantir novamente que o domínio do Koyeb está presente (após remover duplicatas)
+if koyeb_domain_required not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(koyeb_domain_required)
+
 CSRF_USE_SESSIONS = False  # Usar cookies ao invés de sessão para CSRF
 
 # Configurações para proxy reverso (Koyeb usa proxy)
@@ -253,10 +264,13 @@ USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Debug: Log CSRF_TRUSTED_ORIGINS (apenas em desenvolvimento)
-if DEBUG:
-    print(f"🔒 CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
-    print(f"🌐 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+# Debug: Log CSRF_TRUSTED_ORIGINS (sempre, para verificar em produção)
+import logging
+logger = logging.getLogger(__name__)
+logger.info(f"🔒 CSRF_TRUSTED_ORIGINS configurado: {CSRF_TRUSTED_ORIGINS}")
+logger.info(f"🌐 ALLOWED_HOSTS configurado: {ALLOWED_HOSTS}")
+print(f"🔒 CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
+print(f"🌐 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
