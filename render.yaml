@@ -83,8 +83,8 @@ services:
     plan: free
     rootDir: cobranca-bot
     buildCommand: |
+      ./render-build.sh
       npm install
-      npx puppeteer browsers install chrome
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
@@ -98,6 +98,6 @@ services:
       - key: PUPPETEER_CACHE_DIR
         value: /opt/render/.cache/puppeteer
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "false"
+        value: "true"
 
 >>>>>>> e7b2f9a6bcc7a57e9eb1bcc852951ade51ac1656
