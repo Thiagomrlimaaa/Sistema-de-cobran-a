@@ -44,6 +44,7 @@ DATABASE_URL=postgresql://... (se usar PostgreSQL)
 
 **Variáveis de Ambiente:**
 ```
+PORT=3001
 BOT_PORT=3001
 DJANGO_API_URL=https://seu-django.koyeb.app/api
 WHATSAPP_SESSION=cobranca
@@ -51,10 +52,19 @@ PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ```
 
+**⚠️ IMPORTANTE:**
+- O Koyeb usa a variável `PORT` para rotear o tráfego HTTP
+- Defina `PORT=3001` no app do bot
+- O bot usa `PORT` ou `BOT_PORT` (prioridade para `BOT_PORT`)
+
 ## 🔗 Comunicação entre Apps
 
-- **Django → Bot**: `https://seu-bot.koyeb.app`
-- **Bot → Django**: `https://seu-django.koyeb.app/api`
+- **Django → Bot**: `https://coastal-leonanie-thiagocobrancas-2843762c.koyeb.app`
+- **Bot → Django**: `https://acute-crab-thiagocobrancas-328dda69.koyeb.app/api`
+
+### URLs Configuradas:
+- **App Django**: `https://acute-crab-thiagocobrancas-328dda69.koyeb.app`
+- **App Bot**: `https://coastal-leonanie-thiagocobrancas-2843762c.koyeb.app`
 
 ## ✅ Resultado
 

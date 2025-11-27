@@ -38,7 +38,6 @@ COPY cobranca-bot/package*.json ./
 RUN npm install
 
 # Copia todos os arquivos do bot para /app
-COPY cobranca-bot/index.js ./
 COPY cobranca-bot/ ./
 
 EXPOSE 3001
