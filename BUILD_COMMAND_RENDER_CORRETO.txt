@@ -1,0 +1,40 @@
+================================================================================
+  BUILD COMMAND CORRETO PARA RENDER
+================================================================================
+
+Copie e cole este comando no campo "Build Command" do Render:
+
+pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_users && cd cobranca-bot && npm install && cd ..
+
+================================================================================
+  START COMMAND CORRETO PARA RENDER
+================================================================================
+
+Copie e cole este comando no campo "Start Command" do Render:
+
+cd cobranca-bot && npm start > /tmp/bot.log 2>&1 & sleep 8 && cd .. && gunicorn cobranca_chatbot.wsgi:application --bind 0.0.0.0:$PORT
+
+OU (se o primeiro não funcionar):
+
+cd cobranca-bot && (npm start &) && sleep 8 && cd .. && gunicorn cobranca_chatbot.wsgi:application --bind 0.0.0.0:$PORT
+
+================================================================================
+  EXPLICAÇÃO
+================================================================================
+
+BUILD COMMAND:
+- Instala dependências Python
+- Aplica migrações
+- Coleta arquivos estáticos
+- Cria usuários
+- Instala dependências Node.js (npm install no diretório cobranca-bot)
+
+START COMMAND:
+- Entra no diretório cobranca-bot
+- Inicia o bot Node.js em background
+- Aguarda 8 segundos para o bot iniciar
+- Volta para o diretório raiz
+- Inicia o Django com gunicorn
+
+================================================================================
+

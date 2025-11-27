@@ -31,27 +31,37 @@ signal.signal(signal.SIGTERM, signal_handler)
 def main():
     global django_process, bot_process
     
+    # Garantir que estamos no diretório correto
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(script_dir)
+    
     print("🚀 Iniciando Django e Bot WhatsApp...")
+    print(f"📁 Diretório de trabalho: {os.getcwd()}")
     
     # Obter porta do ambiente (Render define PORT automaticamente)
     port = os.environ.get('PORT', '8000')
     
     # Iniciar bot Node.js em background
     print("📱 Iniciando bot WhatsApp...")
-    bot_dir = os.path.join(os.path.dirname(__file__), 'cobranca-bot')
+    bot_dir = os.path.join(script_dir, 'cobranca-bot')
     if os.path.exists(bot_dir):
-        bot_process = subprocess.Popen(
-            ['npm', 'start'],
-            cwd=bot_dir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        print(f"✅ Bot iniciado (PID: {bot_process.pid})")
+        # Verificar se node_modules existe
+        node_modules = os.path.join(bot_dir, 'node_modules')
+        if not os.path.exists(node_modules):
+            print("⚠️ node_modules não encontrado. Execute 'npm install' no diretório cobranca-bot primeiro.")
+        else:
+            bot_process = subprocess.Popen(
+                ['npm', 'start'],
+                cwd=bot_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            print(f"✅ Bot iniciado (PID: {bot_process.pid})")
     else:
-        print("⚠️ Diretório cobranca-bot não encontrado. Bot não será iniciado.")
+        print(f"⚠️ Diretório cobranca-bot não encontrado em {bot_dir}. Bot não será iniciado.")
     
     # Aguardar um pouco para o bot iniciar
-    time.sleep(5)
+    time.sleep(8)
     
     # Iniciar Django (foreground - mantém o serviço ativo)
     print(f"🌐 Iniciando Django na porta {port}...")
@@ -65,6 +75,7 @@ def main():
         ],
         stdout=sys.stdout,
         stderr=sys.stderr,
+        cwd=script_dir,  # Garantir que está no diretório correto
     )
     
     print(f"✅ Django iniciado (PID: {django_process.pid})")
