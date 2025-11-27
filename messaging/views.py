@@ -187,9 +187,25 @@ class BotControlView(APIView):
     def _get_bot_url(self, endpoint: str) -> str:
         bot_url = getattr(settings, "WPPCONNECT_BOT_URL", "http://localhost:3001")
         return f"{bot_url.rstrip('/')}/{endpoint.lstrip('/')}"
+    
+    def _is_render_healthcheck(self, request):
+        """Verifica se é um healthcheck do Render"""
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        return 'Go-http-client' in user_agent or 'Render' in user_agent
+    
+    def check_permissions(self, request):
+        """Permite healthchecks do Render sem autenticação"""
+        if self._is_render_healthcheck(request):
+            return  # Permite healthcheck sem autenticação
+        # Para outras requisições, verifica autenticação normalmente
+        return super().check_permissions(request)
 
     def get(self, request, *args, **kwargs):
         """Obter status do bot"""
+        # Se for healthcheck do Render, retornar OK rápido
+        if self._is_render_healthcheck(request):
+            return Response({"status": "ok", "service": "bot-control"}, status=status.HTTP_200_OK)
+        
         try:
             response = requests.get(self._get_bot_url("/status"), timeout=5)
             response.raise_for_status()
@@ -264,8 +280,24 @@ class BotQRCodeView(APIView):
     def _get_bot_url(self, endpoint: str) -> str:
         bot_url = getattr(settings, "WPPCONNECT_BOT_URL", "http://localhost:3001")
         return f"{bot_url.rstrip('/')}/{endpoint.lstrip('/')}"
+    
+    def _is_render_healthcheck(self, request):
+        """Verifica se é um healthcheck do Render"""
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        return 'Go-http-client' in user_agent or 'Render' in user_agent
+    
+    def check_permissions(self, request):
+        """Permite healthchecks do Render sem autenticação"""
+        if self._is_render_healthcheck(request):
+            return  # Permite healthcheck sem autenticação
+        # Para outras requisições, verifica autenticação normalmente
+        return super().check_permissions(request)
 
     def get(self, request, *args, **kwargs):
+        # Se for healthcheck do Render, retornar OK rápido
+        if self._is_render_healthcheck(request):
+            return Response({"status": "ok", "service": "bot-qr"}, status=status.HTTP_200_OK)
+        
         try:
             response = requests.get(self._get_bot_url("/qr"), timeout=5)
             response.raise_for_status()
