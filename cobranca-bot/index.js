@@ -431,6 +431,10 @@ async function initializeWhatsApp() {
         '--single-process',
         '--disable-gpu',
         '--disable-software-rasterizer',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--remote-debugging-port=0',
+        '--disable-blink-features=AutomationControlled',
         '--disable-extensions',
         '--disable-background-networking',
         '--disable-background-timer-throttling',
@@ -453,7 +457,7 @@ async function initializeWhatsApp() {
         '--disable-notifications'
       ],
       puppeteerOptions: {
-        headless: true,
+        headless: "new", // Usar novo modo headless (recomendado pelo Puppeteer)
         // Usar o caminho do Chromium detectado (ou variável de ambiente)
         executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         args: [
@@ -485,11 +489,19 @@ async function initializeWhatsApp() {
           '--use-mock-keychain',
           '--hide-scrollbars',
           '--disable-logging',
-          '--disable-notifications'
+          '--disable-notifications',
+          // Flags adicionais para Koyeb/containers
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--remote-debugging-port=0', // Usar porta aleatória para DevTools
+          '--disable-blink-features=AutomationControlled'
         ],
         ignoreDefaultArgs: ['--disable-extensions'],
         timeout: 180000, // Aumentar timeout para 3 minutos
-        protocolTimeout: 300000 // Aumentar protocolTimeout para 5 minutos (para operações pesadas como getAllContacts)
+        protocolTimeout: 300000, // Aumentar protocolTimeout para 5 minutos
+        // Adicionar opções para melhorar estabilidade
+        ignoreHTTPSErrors: true,
+        defaultViewport: { width: 1280, height: 720 }
       },
       catchQR: (base64Qr, asciiQR, attempts, urlCode) => {
         console.log('═══════════════════════════════════════════════════════');
