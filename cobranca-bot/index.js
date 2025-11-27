@@ -30,19 +30,20 @@ function findChromium() {
     const { glob } = require('glob');
     
     // Tentar vários padrões de busca (chrome-linux e chrome-linux64)
+    // Priorizar chrome-linux64 (versão mais recente)
     const searchPatterns = [
-      // Render cache - chrome-linux64 (versão mais recente)
+      // Render cache - chrome-linux64 (versão mais recente) - PRIORIDADE ALTA
       process.env.PUPPETEER_CACHE_DIR ? `${process.env.PUPPETEER_CACHE_DIR}/chrome/**/chrome-linux64/chrome` : null,
+      // Caminho direto do Render (baseado no log do usuário)
+      '/opt/render/.cache/puppeteer/chrome/**/chrome-linux64/chrome',
       // Render cache - chrome-linux (versão antiga)
       process.env.PUPPETEER_CACHE_DIR ? `${process.env.PUPPETEER_CACHE_DIR}/chrome/**/chrome-linux/chrome` : null,
+      // Caminho alternativo - chrome-linux
+      '/opt/render/.cache/puppeteer/chrome/**/chrome-linux/chrome',
       // node_modules cache - chrome-linux64
       path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux64', 'chrome'),
       // node_modules cache - chrome-linux
       path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux', 'chrome'),
-      // Caminho alternativo - chrome-linux64
-      '/opt/render/.cache/puppeteer/chrome/**/chrome-linux64/chrome',
-      // Caminho alternativo - chrome-linux
-      '/opt/render/.cache/puppeteer/chrome/**/chrome-linux/chrome',
       // Home directory - chrome-linux64
       path.join(process.env.HOME || process.env.USERPROFILE || '/tmp', '.cache', 'puppeteer', 'chrome', '**', 'chrome-linux64', 'chrome'),
       // Home directory - chrome-linux

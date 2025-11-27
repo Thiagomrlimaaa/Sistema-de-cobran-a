@@ -18,5 +18,8 @@
     "dotenv": "^16.3.1",
     "express": "^4.21.2",
     "glob": "^10.3.10"
+  },
+  "puppeteer": {
+    "skipDownload": false
   }
 }
