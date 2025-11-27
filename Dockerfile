@@ -42,6 +42,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
+# Copia script de inicialização primeiro
+COPY start.sh /app/start.sh
+
 # Copia projeto inteiro
 COPY . .
 
@@ -52,13 +55,7 @@ RUN npm install
 # Volta para raiz
 WORKDIR /app
 
-# Script para rodar Django + Bot
-RUN echo '#!/bin/sh\n\
-python manage.py migrate\n\
-python manage.py collectstatic --noinput\n\
-node cobranca-bot/index.js &\n\
-gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 cobranca_chatbot.wsgi:application\n' > start.sh
-
+# Tornar script de inicialização executável
 RUN chmod +x start.sh
 
 EXPOSE 8000 3001
