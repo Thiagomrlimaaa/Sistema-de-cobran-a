@@ -47,8 +47,13 @@ else:
         if render_host:
             ALLOWED_HOSTS = [render_host]
         else:
-            # Fallback: aceitar qualquer domínio (menos seguro, mas funciona)
-            ALLOWED_HOSTS = ["*"]
+            # Verificar se está no Koyeb (detecta domínio .koyeb.app)
+            koyeb_host = os.getenv("KOYEB_APP_URL", "").replace("https://", "").replace("http://", "")
+            if koyeb_host and ".koyeb.app" in koyeb_host:
+                ALLOWED_HOSTS = [koyeb_host, "localhost", "127.0.0.1"]
+            else:
+                # Adicionar domínio do Koyeb hardcoded (fallback)
+                ALLOWED_HOSTS = ["acute-crab-thiagocobrancas-328dda69.koyeb.app", "localhost", "127.0.0.1"]
 
 # CSRF Trusted Origins (necessário para Fly.io)
 CSRF_TRUSTED_ORIGINS = []
@@ -65,6 +70,19 @@ if not CSRF_TRUSTED_ORIGINS and not DEBUG and ALLOWED_HOSTS:
 # Em desenvolvimento, permitir localhost
 if not CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
+
+# Garantir que o domínio do Koyeb está sempre incluído (se detectado)
+koyeb_url = os.getenv("KOYEB_APP_URL", "")
+if koyeb_url and ".koyeb.app" in koyeb_url:
+    if not koyeb_url.startswith("https://"):
+        koyeb_url = f"https://{koyeb_url}"
+    if koyeb_url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(koyeb_url)
+
+# Adicionar domínio do Koyeb hardcoded (fallback se variável não estiver configurada)
+koyeb_domain = "https://acute-crab-thiagocobrancas-328dda69.koyeb.app"
+if koyeb_domain not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(koyeb_domain)
 
 # Garantir que o domínio do Fly.io está sempre incluído (fallback)
 fly_domain = "https://chatbot-cobrana-silent-feather-3785.fly.dev"
