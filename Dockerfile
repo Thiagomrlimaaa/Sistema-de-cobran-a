@@ -47,13 +47,10 @@ COPY . .
 
 # Instala dependências do bot
 WORKDIR /app/cobranca-bot
-RUN npm install
+RUN npm install --production=false
 
 # Volta para raiz
 WORKDIR /app
-
-# Coletar arquivos estáticos durante o build (opcional - não falha se não houver)
-RUN python manage.py collectstatic --noinput 2>&1 || true
 
 # Tornar script de inicialização executável
 RUN chmod +x start.sh
