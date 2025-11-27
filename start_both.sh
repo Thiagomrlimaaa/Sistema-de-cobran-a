@@ -2,7 +2,7 @@
 # Script para iniciar Django e Bot simultaneamente
 
 # Iniciar bot em background na porta 3001
-# IMPORTANTE: Não definir PORT aqui, pois o Fly.io usa PORT=8000 para Django
+# Railway usa PORT para o serviço principal (Django), então o bot usa porta fixa 3001
 cd /code/cobranca-bot
 
 # Verificar se node_modules existe
@@ -13,12 +13,12 @@ fi
 
 # Configurar variáveis de ambiente do bot
 export BOT_PORT=3001
-export DJANGO_API_URL=${DJANGO_API_URL:-"http://localhost:8000/api"}
+export DJANGO_API_URL=${DJANGO_API_URL:-"http://localhost:${PORT:-8000}/api"}
 export WHATSAPP_SESSION=${WHATSAPP_SESSION:-"cobranca"}
-export PUPPETEER_EXECUTABLE_PATH=${PUPPETEER_EXECUTABLE_PATH:-"/usr/bin/chromium"}
-export CHROMIUM_PATH=${CHROMIUM_PATH:-"/usr/bin/chromium"}
-export PUPPETEER_SKIP_DOWNLOAD=true
-unset PORT  # Garantir que PORT não seja usado pelo bot
+export PUPPETEER_EXECUTABLE_PATH=${PUPPETEER_EXECUTABLE_PATH:-"/usr/bin/chromium-browser"}
+export CHROMIUM_PATH=${CHROMIUM_PATH:-"/usr/bin/chromium-browser"}
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Railway usa PORT para o serviço principal, então não desabilitamos
 
 echo "Iniciando bot na porta 3001..."
 # Limpar logs anteriores
@@ -72,8 +72,9 @@ else
     echo "✅ Bot iniciado e pronto!"
 fi
 
-# Iniciar Django na porta 8000 (porta principal do Fly.io)
+# Iniciar Django na porta definida pelo Railway (ou 8000 como padrão)
 # IMPORTANTE: Django deve ser o processo principal (não usar &)
 cd /code
-echo "Iniciando Django na porta 8000..."
-exec gunicorn --bind 0.0.0.0:8000 --workers 2 cobranca_chatbot.wsgi
+DJANGO_PORT=${PORT:-8000}
+echo "Iniciando Django na porta ${DJANGO_PORT}..."
+exec gunicorn --bind 0.0.0.0:${DJANGO_PORT} --workers 2 --timeout 120 cobranca_chatbot.wsgi

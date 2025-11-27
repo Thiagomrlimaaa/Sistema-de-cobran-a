@@ -61,6 +61,9 @@ RUN python manage.py collectstatic --noinput
 # Tornar script executável
 RUN chmod +x /code/start_both.sh
 
+# Expor portas (Railway usa PORT dinamicamente, mas expomos ambas para compatibilidade)
 EXPOSE 8000 3001
 
+# Railway vai usar PORT para o serviço principal (Django)
+# O bot roda na porta 3001 internamente
 CMD ["/code/start_both.sh"]
