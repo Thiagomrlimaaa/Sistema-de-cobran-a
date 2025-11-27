@@ -7,16 +7,42 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// SOLUÇÃO DEFINITIVA: Usar APENAS /usr/bin/chromium (instalado via apt-get)
-// Removida toda a lógica de busca do Chrome do Puppeteer
-const CHROMIUM_PATH = '/usr/bin/chromium';
-
-if (fs.existsSync(CHROMIUM_PATH)) {
-  console.log(`✅ Chromium encontrado em: ${CHROMIUM_PATH}`);
-} else {
-  console.log(`⚠️ Chromium não encontrado em: ${CHROMIUM_PATH}`);
-  console.log('⚠️ Certifique-se de que o Chromium foi instalado no Build Command com: apt-get install -y chromium');
+// SOLUÇÃO: Usar Chrome instalado pelo Puppeteer no Render
+// O Render não permite apt-get, então usamos o Chrome do Puppeteer
+// Caminho padrão do Puppeteer no Render: /opt/render/.cache/puppeteer/chrome/
+function getChromiumPath() {
+  // Tentar caminho do Puppeteer no Render primeiro
+  const puppeteerPaths = [
+    '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome',
+    '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux/chrome',
+  ];
+  
+  // Tentar encontrar usando glob
+  try {
+    const { glob } = require('glob');
+    for (const pattern of puppeteerPaths) {
+      const files = glob.sync(pattern, { absolute: true });
+      if (files.length > 0 && fs.existsSync(files[0])) {
+        console.log(`✅ Chrome do Puppeteer encontrado em: ${files[0]}`);
+        return files[0];
+      }
+    }
+  } catch (e) {
+    console.log(`⚠️ Erro ao procurar Chrome do Puppeteer: ${e.message}`);
+  }
+  
+  // Fallback: tentar /usr/bin/chromium (se disponível)
+  const systemChromium = '/usr/bin/chromium';
+  if (fs.existsSync(systemChromium)) {
+    console.log(`✅ Chromium do sistema encontrado em: ${systemChromium}`);
+    return systemChromium;
+  }
+  
+  console.log('⚠️ Chrome não encontrado, Puppeteer tentará usar o padrão');
+  return undefined;
 }
+
+const CHROMIUM_PATH = getChromiumPath();
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
 const SESSION_NAME = process.env.WHATSAPP_SESSION || 'cobranca';
