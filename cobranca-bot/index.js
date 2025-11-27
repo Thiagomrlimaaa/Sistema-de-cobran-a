@@ -3,11 +3,11 @@ const axios = require('axios');
 const express = require('express');
 const cors = require('cors');
 const { execSync } = require('child_process');
+const fs = require('fs');
 require('dotenv').config();
 
 // Tentar encontrar Chromium no sistema
 function findChromium() {
-  const fs = require('fs');
   const possiblePaths = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
     process.env.CHROMIUM_PATH,
@@ -251,7 +251,6 @@ async function initializeWhatsApp() {
 
   // Limpar sessão antiga se existir (para evitar erro de navegador já em execução)
   try {
-    const fs = require('fs');
     const path = require('path');
     const sessionPath = path.join(__dirname, 'tokens', SESSION_NAME);
     
@@ -298,7 +297,6 @@ async function initializeWhatsApp() {
   console.log('🔧 Verificando se Chromium existe...');
   
   // Verificar se Chromium existe antes de iniciar
-  const fs = require('fs');
   const execPath = chromiumPath || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH;
   if (execPath && !fs.existsSync(execPath)) {
     console.error(`❌ Chromium não encontrado em: ${execPath}`);
@@ -316,7 +314,6 @@ async function initializeWhatsApp() {
   console.log('🔧 UserDataDir:', userDataDir);
   
   // Criar diretório se não existir
-  const fs = require('fs');
   try {
     if (!fs.existsSync(userDataDir)) {
       fs.mkdirSync(userDataDir, { recursive: true });
