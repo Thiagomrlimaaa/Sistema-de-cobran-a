@@ -13,6 +13,10 @@ require('dotenv').config();
 function getChromiumPath() {
   console.log('🔍 Procurando Chrome/Chromium...');
   
+  // Primeiro, tentar listar o diretório do cache do Puppeteer
+  const cacheDir = process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer';
+  console.log(`📁 Cache do Puppeteer: ${cacheDir}`);
+  
   // Tentar caminho do Puppeteer no Render primeiro
   const puppeteerPaths = [
     '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome',
@@ -48,6 +52,33 @@ function getChromiumPath() {
     }
   } catch (e) {
     console.log(`⚠️ Erro ao usar glob: ${e.message}`);
+  }
+  
+  // Tentar listar diretórios manualmente
+  try {
+    console.log(`🔍 Listando diretório do cache: ${cacheDir}`);
+    if (fs.existsSync(cacheDir)) {
+      const entries = fs.readdirSync(cacheDir, { withFileTypes: true });
+      console.log(`📁 Entradas no cache: ${entries.length}`);
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          console.log(`📁 Diretório encontrado: ${entry.name}`);
+          const chromePath = path.join(cacheDir, entry.name, 'chrome-linux64', 'chrome');
+          if (fs.existsSync(chromePath)) {
+            console.log(`✅ Chrome encontrado manualmente em: ${chromePath}`);
+            return chromePath;
+          }
+          // Tentar chrome-linux também
+          const chromePath2 = path.join(cacheDir, entry.name, 'chrome-linux', 'chrome');
+          if (fs.existsSync(chromePath2)) {
+            console.log(`✅ Chrome encontrado manualmente em: ${chromePath2}`);
+            return chromePath2;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.log(`⚠️ Erro ao listar cache: ${e.message}`);
   }
   
   // Fallback: tentar /usr/bin/chromium (se disponível)
