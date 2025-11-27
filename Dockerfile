@@ -49,14 +49,13 @@ RUN set -ex && \
     rm -rf /root/.cache/
 COPY . /code
 
+# Puppeteer vai usar o Chromium do sistema
+ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium"
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 # Instalar dependências do bot
-# Configurar Puppeteer para usar Chromium do sistema
-ENV PUPPETEER_SKIP_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-ENV CHROMIUM_PATH=/usr/bin/chromium
 RUN cd /code/cobranca-bot && npm install
 
-ENV SECRET_KEY "dMc9JOqmyyP0mHuOh86VGu2zVMxPmhKTFcicZ0Hptb1JZcvFeA"
 RUN python manage.py collectstatic --noinput
 
 # Tornar script executável

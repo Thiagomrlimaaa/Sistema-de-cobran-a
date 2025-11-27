@@ -18,6 +18,6 @@
     "dotenv": "^16.3.1",
     "express": "^4.21.2",
     "glob": "^10.3.10",
-    "puppeteer-core": "^21.11.0"
+    "puppeteer": "^21.11.0"
   }
 }
