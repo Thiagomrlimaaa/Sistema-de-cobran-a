@@ -1,0 +1,60 @@
+================================================================================
+  SOLUÇÃO - CELERY TRAVANDO NO FLY.IO
+================================================================================
+
+PROBLEMA:
+---------
+O Celery está tentando iniciar mas não tem Redis configurado.
+O sistema não usa Celery ativamente (mensagens são enviadas via API do bot).
+
+SOLUÇÃO APLICADA:
+-----------------
+✅ Comentei a linha do Celery no fly.toml
+✅ O app Django funcionará normalmente sem Celery
+
+================================================================================
+  PRÓXIMOS PASSOS
+================================================================================
+
+1. FAZER DEPLOY DA CORREÇÃO
+----------------------------
+As correções já foram aplicadas no fly.toml.
+
+Faça commit e push:
+git add fly.toml
+git commit -m "Fix: Desabilitar Celery no Fly.io (não tem Redis)"
+git push origin main
+
+2. VERIFICAR DEPLOY
+-------------------
+Após o push, o Fly.io fará deploy automaticamente.
+
+Ou force deploy manual:
+- Website: https://fly.io/apps/chatbot-cobrana-silent-feather-3785
+- Vá em "Deployments" > "Deploy latest image"
+
+3. TESTAR O APP
+---------------
+Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev
+
+O app deve funcionar normalmente!
+
+================================================================================
+  SE PRECISAR DO CELERY NO FUTURO
+================================================================================
+
+Para usar Celery no Fly.io, você precisa:
+
+1. Criar um Redis no Fly.io:
+   fly redis create
+
+2. Configurar variável de ambiente:
+   fly secrets set CELERY_BROKER_URL="redis://seu-redis.fly.dev:6379/0"
+   fly secrets set CELERY_RESULT_BACKEND="redis://seu-redis.fly.dev:6379/0"
+
+3. Descomentar a linha do Celery no fly.toml
+
+Mas por enquanto, NÃO é necessário! O sistema funciona sem Celery.
+
+================================================================================
+

@@ -1,0 +1,55 @@
+================================================================================
+  SOLUÇÃO - ERRO CSRF NO LOGIN
+================================================================================
+
+PROBLEMA:
+---------
+Erro 403: "Verificação CSRF falhou" ao tentar fazer login.
+
+CAUSA:
+------
+O CSRF_TRUSTED_ORIGINS não estava configurado corretamente.
+
+SOLUÇÃO APLICADA:
+-----------------
+✅ Configurado CSRF_TRUSTED_ORIGINS via secrets
+✅ Melhorado código do settings.py para detectar automaticamente
+✅ Reiniciada máquina para aplicar mudanças
+
+================================================================================
+  O QUE FOI FEITO
+================================================================================
+
+1. ✅ Configurado secret:
+   CSRF_TRUSTED_ORIGINS = https://chatbot-cobrana-silent-feather-3785.fly.dev
+
+2. ✅ Melhorado settings.py:
+   - Agora detecta automaticamente o domínio do Fly.io
+   - Funciona mesmo sem variável de ambiente
+
+3. ✅ Reiniciada máquina para aplicar
+
+================================================================================
+  TESTAR AGORA
+================================================================================
+
+1. Aguarde 1-2 minutos para a máquina reiniciar
+2. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev
+3. Tente fazer login novamente
+4. O erro CSRF deve estar resolvido!
+
+================================================================================
+  SE AINDA DER ERRO
+================================================================================
+
+Verificar se a variável está configurada:
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets list -a chatbot-cobrana-silent-feather-3785
+
+Se não aparecer CSRF_TRUSTED_ORIGINS, configure novamente:
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set CSRF_TRUSTED_ORIGINS="https://chatbot-cobrana-silent-feather-3785.fly.dev" -a chatbot-cobrana-silent-feather-3785
+
+Depois reinicie a máquina:
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine restart 6e827944b21458 -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+

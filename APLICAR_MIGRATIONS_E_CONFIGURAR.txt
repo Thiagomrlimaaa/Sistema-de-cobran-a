@@ -1,0 +1,106 @@
+================================================================================
+  APLICAR MIGRATIONS E CONFIGURAR VOLUME PERSISTENTE
+================================================================================
+
+✅ DEPLOY CONCLUÍDO
+-------------------
+O app foi deployado com sucesso.
+
+================================================================================
+  PASSO 1: APLICAR MIGRATIONS
+================================================================================
+
+Conecte via SSH e execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH, execute:
+python manage.py migrate --noinput
+
+================================================================================
+  PASSO 2: CRIAR USUÁRIOS
+================================================================================
+
+Ainda dentro do SSH:
+python manage.py shell
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+if not User.objects.filter(username='jeff').exists():
+    User.objects.create_user('jeff', password='1')
+    print('Usuário jeff criado')
+else:
+    print('Usuário jeff já existe')
+
+if not User.objects.filter(username='thiago').exists():
+    User.objects.create_user('thiago', password='1')
+    print('Usuário thiago criado')
+else:
+    print('Usuário thiago já existe')
+
+exit()
+exit
+
+================================================================================
+  PASSO 3: CONFIGURAR VOLUME PERSISTENTE
+================================================================================
+
+Para fazer o SQLite persistir permanentemente:
+
+OPÇÃO A: USAR POSTGRESQL (RECOMENDADO - MAIS CONFIÁVEL)
+-------------------------------------------------------
+
+1. Criar banco PostgreSQL:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" postgres create --name chatbot-db --region gru
+
+2. Obter URL de conexão (será mostrada após criar):
+   Anote a URL que aparece, algo como:
+   postgres://user:pass@host:5432/dbname
+
+3. Configurar no app:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" secrets set DATABASE_URL="postgres://..." -a chatbot-cobrana-silent-feather-3785
+
+4. Fazer deploy:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+5. Aplicar migrations novamente (via SSH):
+   python manage.py migrate --noinput
+
+OPÇÃO B: USAR VOLUME COM SQLITE
+-------------------------------
+
+1. Parar máquinas antigas:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine stop 6e827944b21458 -a chatbot-cobrana-silent-feather-3785
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine stop 91850925f54698 -a chatbot-cobrana-silent-feather-3785
+
+2. Remover máquinas antigas:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine remove 6e827944b21458 -a chatbot-cobrana-silent-feather-3785 --force
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine remove 91850925f54698 -a chatbot-cobrana-silent-feather-3785 --force
+
+3. Descomentar mount no fly.toml:
+   Editar fly.toml e descomentar:
+   [[mounts]]
+     source = "db_data"
+     destination = "/data"
+
+4. Fazer deploy (criará nova máquina com volume):
+   "%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+5. Aplicar migrations:
+   (via SSH, como no Passo 1)
+
+================================================================================
+  TESTAR LOGIN
+================================================================================
+
+Após aplicar migrations e criar usuários, teste:
+
+https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+
+Usuários:
+- jeff / 1
+- thiago / 1
+
+================================================================================
+

@@ -1,0 +1,70 @@
+================================================================================
+  RESUMO: CONFIGURAÇÃO DO VOLUME PERSISTENTE
+================================================================================
+
+✅ CONCLUÍDO:
+------------
+1. ✅ Volume criado: db_data (1GB)
+2. ✅ fly.toml configurado com mount em /data
+3. ✅ settings.py configurado para usar /data/db.sqlite3
+4. ✅ Máquinas antigas removidas
+5. ✅ Deploy feito (nova máquina criada)
+
+================================================================================
+  PRÓXIMOS PASSOS
+================================================================================
+
+1. VERIFICAR SE MÁQUINA APP FOI CRIADA
+--------------------------------------
+Execute:
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine list -a chatbot-cobrana-silent-feather-3785
+
+Deve mostrar uma máquina do tipo "app" (não apenas "fly_app_release_command").
+
+2. APLICAR MIGRATIONS E CRIAR USUÁRIOS
+---------------------------------------
+Conecte via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+
+# Verificar volume
+ls -la /data
+
+# Aplicar migrations
+python manage.py migrate --noinput
+
+# Criar usuários
+python manage.py shell
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+if not User.objects.filter(username='jeff').exists():
+    User.objects.create_user('jeff', password='1')
+    print('✅ jeff criado')
+
+if not User.objects.filter(username='thiago').exists():
+    User.objects.create_user('thiago', password='1')
+    print('✅ thiago criado')
+
+exit()
+exit
+
+3. TESTAR LOGIN
+---------------
+https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+
+Usuários: jeff/1 ou thiago/1
+
+================================================================================
+  IMPORTANTE
+================================================================================
+
+✅ O banco SQLite agora está em /data/db.sqlite3 (volume persistente)
+✅ Dados NÃO serão perdidos quando a máquina reiniciar
+✅ O volume persiste mesmo se a máquina for destruída e recriada
+
+================================================================================
+

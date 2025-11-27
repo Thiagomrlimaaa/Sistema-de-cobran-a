@@ -1,0 +1,55 @@
+================================================================================
+  ANEXAR VOLUME À MÁQUINA
+================================================================================
+
+PROBLEMA:
+---------
+O volume foi criado, mas precisa ser anexado à máquina que está rodando.
+
+SOLUÇÃO:
+--------
+O Fly.io deve anexar automaticamente, mas pode precisar fazer deploy novamente
+ou anexar manualmente.
+
+================================================================================
+  OPÇÃO 1: FAZER DEPLOY NOVAMENTE
+================================================================================
+
+O deploy falhou porque o volume não estava anexado. Agora que o volume existe,
+tente fazer deploy novamente:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+O Fly.io deve anexar o volume automaticamente.
+
+================================================================================
+  OPÇÃO 2: ANEXAR MANUALMENTE (SE NECESSÁRIO)
+================================================================================
+
+Se o deploy ainda falhar, anexar manualmente:
+
+1. Listar máquinas:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine list -a chatbot-cobrana-silent-feather-3785
+
+2. Anexar volume à máquina (substitua MACHINE_ID):
+   "%USERPROFILE%\.fly\bin\flyctl.exe" volumes attach vol_vl6k7o95zeo21m8vture MACHINE_ID -a chatbot-cobrana-silent-feather-3785
+
+Mas geralmente o deploy automático funciona.
+
+================================================================================
+  APÓS DEPLOY FUNCIONAR
+================================================================================
+
+1. Aplicar migrations:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py migrate --noinput"
+
+2. Criar usuários:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+   python manage.py shell
+   (criar usuários)
+   exit()
+
+3. Testar login
+
+================================================================================
+

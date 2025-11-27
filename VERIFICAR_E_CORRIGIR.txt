@@ -1,0 +1,85 @@
+================================================================================
+  VERIFICAR E CORRIGIR ERRO 500
+================================================================================
+
+O erro 500 pode ser causado por:
+1. Migrations não aplicadas
+2. Banco de dados vazio
+3. Template não encontrado
+4. Erro de importação
+
+================================================================================
+  PASSO 1: VER LOGS ESPECÍFICOS
+================================================================================
+
+Execute e tente fazer login:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por linhas com:
+- "Traceback"
+- "Error"
+- "Exception"
+- "DoesNotExist"
+- "OperationalError"
+
+================================================================================
+  PASSO 2: VERIFICAR MIGRATIONS
+================================================================================
+
+Conectar via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH, execute:
+python manage.py migrate
+
+Se der erro, execute:
+python manage.py migrate --run-syncdb
+
+================================================================================
+  PASSO 3: VERIFICAR BANCO DE DADOS
+================================================================================
+
+Dentro do SSH:
+python manage.py dbshell
+
+Ou verificar se tabelas existem:
+python manage.py showmigrations
+
+================================================================================
+  PASSO 4: CRIAR SUPERUSUÁRIO (SE NECESSÁRIO)
+================================================================================
+
+Dentro do SSH:
+python manage.py createsuperuser
+
+Use:
+- Username: jeff
+- Password: 1
+
+Ou:
+- Username: thiago  
+- Password: 1
+
+================================================================================
+  PASSO 5: VERIFICAR SE TEMPLATE EXISTE
+================================================================================
+
+Dentro do SSH:
+ls -la /code/templates/dashboard/home.html
+
+Se não existir, o problema é no deploy.
+
+================================================================================
+  SOLUÇÃO RÁPIDA: REAPLICAR MIGRATIONS
+================================================================================
+
+Execute via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py migrate"
+
+Isso aplica as migrations sem precisar entrar no SSH.
+
+================================================================================
+

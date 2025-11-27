@@ -1,0 +1,76 @@
+================================================================================
+  SOLUÇÃO - DEPLOY FALHOU (MÁQUINAS ANTIGAS)
+================================================================================
+
+PROBLEMA:
+---------
+Ainda há máquinas antigas tentando executar Celery com configuração antiga.
+O deploy falhou porque essas máquinas estão causando conflito.
+
+SOLUÇÃO:
+--------
+1. Remover TODAS as máquinas antigas
+2. Fazer novo deploy
+
+================================================================================
+  COMANDOS PARA EXECUTAR
+================================================================================
+
+# 1. Listar todas as máquinas
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine list
+
+# 2. Parar e remover TODAS as máquinas (exceto as do processo 'app')
+# Para cada máquina do tipo 'celery' ou problemática:
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine stop <ID>
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine remove <ID> --force
+
+# 3. Fazer deploy novamente
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy
+
+================================================================================
+  OU VIA WEBSITE (MAIS FÁCIL)
+================================================================================
+
+1. Acesse: https://fly.io/apps/chatbot-cobrana-silent-feather-3785
+2. Vá em "Machines" (máquinas)
+3. Para CADA máquina que NÃO seja do tipo 'app':
+   - Clique nos 3 pontos (...)
+   - Selecione "Stop"
+   - Depois selecione "Remove" (remover)
+4. Vá em "Deployments" > "Deploy latest image" para fazer novo deploy
+
+IMPORTANTE: Mantenha apenas máquinas do tipo 'app' (Django)
+
+================================================================================
+  VERIFICAR FLY.TOML
+================================================================================
+
+O fly.toml deve ter o Celery COMENTADO:
+
+[processes]
+  app = 'gunicorn --bind :8000 --workers 2 cobranca_chatbot.wsgi'
+  # Celery desabilitado temporariamente - requer Redis configurado
+  # celery = 'celery -A cobranca_chatbot.celery worker --loglevel=INFO'
+
+Se ainda tiver a linha sem comentário, corrija antes de fazer deploy!
+
+================================================================================
+  APÓS REMOVER MÁQUINAS
+================================================================================
+
+1. Fazer commit e push das correções (se ainda não fez):
+   git add fly.toml
+   git commit -m "Fix: Desabilitar Celery no Fly.io"
+   git push origin main
+
+2. Fazer deploy:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" deploy
+
+3. Verificar logs:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" logs
+
+4. Testar app:
+   https://chatbot-cobrana-silent-feather-3785.fly.dev
+
+================================================================================
+

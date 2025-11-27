@@ -1,0 +1,76 @@
+================================================================================
+  VERIFICAR E CONFIGURAR BOT WHATSAPP
+================================================================================
+
+✅ USUÁRIOS CRIADOS:
+-------------------
+Você já criou os usuários jeff e thiago com sucesso!
+
+================================================================================
+  AGORA: VERIFICAR SE O BOT ESTÁ RODANDO
+================================================================================
+
+Você está dentro do shell Python. Para sair:
+
+1. Digite: exit()
+2. Pressione Enter
+
+Depois execute estes comandos (um de cada vez):
+
+# 1. Verificar se o bot está rodando
+ps aux | grep -E 'node|npm'
+
+# 2. Verificar se o bot está respondendo
+curl -s http://localhost:3001/status || echo 'Bot não está respondendo'
+
+# 3. Ver logs do bot
+cat /tmp/bot.log
+
+# 4. Verificar se node_modules existe
+ls -la /code/cobranca-bot/node_modules
+
+================================================================================
+  CONFIGURAR VARIÁVEIS DE AMBIENTE
+================================================================================
+
+SAIA do SSH primeiro (digite: exit)
+
+Depois execute no seu terminal Windows:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set WPPCONNECT_BOT_URL="http://localhost:3001" -a chatbot-cobrana-silent-feather-3785
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set DJANGO_API_URL="https://chatbot-cobrana-silent-feather-3785.fly.dev/api" -a chatbot-cobrana-silent-feather-3785
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set WHATSAPP_SESSION="cobranca" -a chatbot-cobrana-silent-feather-3785
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set BOT_PORT="3001" -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  SE O BOT NÃO ESTIVER RODANDO
+================================================================================
+
+O script start_both.sh deve iniciar o bot automaticamente, mas pode estar falhando.
+
+Verificar logs:
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "Iniciando bot na porta 3001"
+- "Bot API rodando na porta 3001"
+- Erros relacionados a node/npm
+
+================================================================================
+  FAZER DEPLOY NOVAMENTE
+================================================================================
+
+Se o bot não estiver rodando, faça deploy novamente:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+O script atualizado deve:
+1. Instalar dependências do bot (npm install)
+2. Iniciar o bot na porta 3001
+3. Iniciar o Django na porta 8000
+
+================================================================================
+

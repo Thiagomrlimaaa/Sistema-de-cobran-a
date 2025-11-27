@@ -1,0 +1,70 @@
+================================================================================
+  CORREÇÃO: CHROME/PUPPETEER PARA WPPCONNECT
+================================================================================
+
+✅ CORREÇÕES APLICADAS:
+-----------------------
+1. ✅ Dockerfile atualizado com dependências do Chromium
+2. ✅ Chromium instalado no container
+3. ✅ Variáveis de ambiente configuradas (PUPPETEER_SKIP_DOWNLOAD, PUPPETEER_EXECUTABLE_PATH)
+4. ✅ Código do bot atualizado para usar Chromium do sistema
+
+================================================================================
+  O QUE FOI FEITO
+================================================================================
+
+1. DOCKERFILE:
+--------------
+- Instaladas todas as dependências do Chromium
+- Chromium instalado via apt-get
+- PUPPETEER_SKIP_DOWNLOAD=true (não baixa Chrome do Puppeteer)
+- PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+- CHROMIUM_PATH=/usr/bin/chromium
+
+2. CÓDIGO DO BOT (index.js):
+----------------------------
+- Função findChromium() atualizada para priorizar variáveis de ambiente
+- executablePath configurado para usar Chromium do sistema
+- Args do Puppeteer já estavam corretos (--no-sandbox, etc)
+
+================================================================================
+  PRÓXIMO PASSO: FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+O deploy irá:
+1. Instalar Chromium e dependências
+2. Configurar Puppeteer para usar Chromium do sistema
+3. Bot do WhatsApp deve funcionar corretamente
+
+================================================================================
+  VERIFICAR SE FUNCIONOU
+================================================================================
+
+Após o deploy, verifique os logs:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "✅ Chromium encontrado em: /usr/bin/chromium"
+- Não deve aparecer erro sobre Chrome não encontrado
+
+================================================================================
+  SE AINDA DER ERRO
+================================================================================
+
+Se ainda der erro, verifique se o Chromium está instalado:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+which chromium
+ls -la /usr/bin/chromium
+
+Se não existir, pode ser que precise instalar manualmente ou usar outra imagem base.
+
+================================================================================
+

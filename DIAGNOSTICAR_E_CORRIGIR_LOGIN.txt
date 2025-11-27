@@ -1,0 +1,120 @@
+================================================================================
+  DIAGNOSTICAR E CORRIGIR ERRO NO LOGIN
+================================================================================
+
+PROBLEMA:
+---------
+Erro ao acessar ou fazer login na página.
+
+POSSÍVEIS CAUSAS:
+-----------------
+1. Migrations não aplicadas (tabelas não existem)
+2. Usuários não criados
+3. Banco de dados não configurado
+4. Erro no template ou view
+
+================================================================================
+  PASSO 1: VERIFICAR LOGS
+================================================================================
+
+Execute para ver erros recentes:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "no such table" (migrations não aplicadas)
+- "OperationalError" (problema com banco)
+- "TemplateDoesNotExist" (template não encontrado)
+- "500" (erro interno)
+
+================================================================================
+  PASSO 2: VERIFICAR BANCO DE DADOS
+================================================================================
+
+Conecte via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH, execute:
+
+# Verificar se banco existe
+ls -la /code/db.sqlite3
+# ou
+ls -la /data/db.sqlite3
+
+# Verificar migrations
+python manage.py showmigrations
+
+# Aplicar migrations se necessário
+python manage.py migrate --noinput
+
+================================================================================
+  PASSO 3: CRIAR USUÁRIOS
+================================================================================
+
+Ainda dentro do SSH:
+
+python manage.py shell
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+# Verificar se usuários existem
+print("Usuários existentes:", User.objects.all().count())
+
+# Criar jeff
+if not User.objects.filter(username='jeff').exists():
+    User.objects.create_user('jeff', password='1')
+    print('✅ Usuário jeff criado')
+else:
+    print('ℹ️ Usuário jeff já existe')
+    user = User.objects.get(username='jeff')
+    user.set_password('1')
+    user.save()
+    print('✅ Senha do jeff atualizada')
+
+# Criar thiago
+if not User.objects.filter(username='thiago').exists():
+    User.objects.create_user('thiago', password='1')
+    print('✅ Usuário thiago criado')
+else:
+    print('ℹ️ Usuário thiago já existe')
+    user = User.objects.get(username='thiago')
+    user.set_password('1')
+    user.save()
+    print('✅ Senha do thiago atualizada')
+
+exit()
+exit
+
+================================================================================
+  PASSO 4: CONFIGURAR VOLUME PERSISTENTE
+================================================================================
+
+Para fazer o SQLite persistir permanentemente:
+
+1. Descomentar mount no fly.toml:
+   Editar fly.toml e descomentar:
+   [[mounts]]
+     source = "db_data"
+     destination = "/data"
+
+2. Parar máquinas antigas:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine stop 6e827944b21458 -a chatbot-cobrana-silent-feather-3785
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine stop 91850925f54698 -a chatbot-cobrana-silent-feather-3785
+
+3. Remover máquinas antigas:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine remove 6e827944b21458 -a chatbot-cobrana-silent-feather-3785 --force
+   "%USERPROFILE%\.fly\bin\flyctl.exe" machine remove 91850925f54698 -a chatbot-cobrana-silent-feather-3785 --force
+
+4. Fazer deploy (criará nova máquina com volume):
+   "%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+5. Aplicar migrations novamente:
+   (via SSH, como no Passo 2)
+
+6. Criar usuários novamente:
+   (via SSH, como no Passo 3)
+
+================================================================================
+

@@ -1,0 +1,79 @@
+================================================================================
+  CONFIGURAR BOT WHATSAPP NO FLY.IO
+================================================================================
+
+PROBLEMA:
+---------
+O bot Node.js não está rodando no Fly.io.
+O Django está tentando conectar em http://localhost:3001, mas não há nada rodando.
+
+SOLUÇÃO:
+--------
+Adicionar o bot como um processo separado no fly.toml.
+
+================================================================================
+  PASSO 1: ADICIONAR PROCESSO NO FLY.TOML
+================================================================================
+
+✅ JÁ FEITO: Adicionado processo 'bot' no fly.toml
+
+[processes]
+  app = 'gunicorn --bind :8000 --workers 2 cobranca_chatbot.wsgi'
+  bot = 'cd cobranca-bot && npm start'
+
+================================================================================
+  PASSO 2: CONFIGURAR VARIÁVEIS DE AMBIENTE
+================================================================================
+
+Execute estes comandos:
+
+# URL do Django (para o bot se conectar)
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set DJANGO_API_URL="https://chatbot-cobrana-silent-feather-3785.fly.dev/api" -a chatbot-cobrana-silent-feather-3785
+
+# URL do bot (para o Django se conectar)
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set WPPCONNECT_BOT_URL="https://chatbot-cobrana-silent-feather-3785.fly.dev" -a chatbot-cobrana-silent-feather-3785
+
+# Configurações do bot
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set WHATSAPP_SESSION="cobranca" -a chatbot-cobrana-silent-feather-3785
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set BOT_PORT="3001" -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  PASSO 3: CRIAR DOCKERFILE PARA O BOT (SE NECESSÁRIO)
+================================================================================
+
+O Fly.io pode precisar de um Dockerfile separado para o bot, ou podemos
+usar o mesmo Dockerfile e apenas mudar o comando.
+
+Por enquanto, vamos tentar com o processo separado.
+
+================================================================================
+  PASSO 4: FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+Isso vai criar uma máquina separada para o bot.
+
+================================================================================
+  ALTERNATIVA: RODAR BOT NA MESMA MÁQUINA
+================================================================================
+
+Se o processo separado não funcionar, podemos rodar o bot na mesma máquina
+usando um script que inicia ambos.
+
+Mas primeiro, vamos tentar o processo separado.
+
+================================================================================
+  VERIFICAR SE FUNCIONOU
+================================================================================
+
+Após o deploy:
+1. Verificar se há 2 máquinas rodando (app e bot)
+2. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/dashboard/whatsapp-bot/
+3. Clique em "Iniciar Bot"
+4. O QR Code deve aparecer
+
+================================================================================
+

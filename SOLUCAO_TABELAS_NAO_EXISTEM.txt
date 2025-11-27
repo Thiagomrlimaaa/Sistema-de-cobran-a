@@ -1,0 +1,91 @@
+================================================================================
+  SOLUÇÃO - ERRO: no such table: auth_user
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+----------------------
+O banco de dados SQLite não tem as tabelas criadas.
+As migrations não foram aplicadas.
+
+ERRO:
+-----
+sqlite3.OperationalError: no such table: auth_user
+
+================================================================================
+  SOLUÇÃO: APLICAR MIGRATIONS
+================================================================================
+
+Execute este comando:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py migrate --noinput"
+
+Isso vai criar todas as tabelas necessárias no banco de dados.
+
+================================================================================
+  DEPOIS DE APLICAR MIGRATIONS
+================================================================================
+
+1. CRIAR USUÁRIOS:
+------------------
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py createsuperuser --username jeff --email jeff@example.com --noinput"
+
+Depois defina a senha:
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+python manage.py shell
+from django.contrib.auth import get_user_model
+User = get_user_model()
+user = User.objects.get(username='jeff')
+user.set_password('1')
+user.save()
+exit
+
+Repita para 'thiago':
+user = User.objects.get(username='thiago')
+user.set_password('1')
+user.save()
+exit
+
+================================================================================
+  OU CRIAR VIA COMANDO CUSTOMIZADO
+================================================================================
+
+Se tiver o comando create_users.py, execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py create_users"
+
+================================================================================
+  VERIFICAR SE FUNCIONOU
+================================================================================
+
+Após aplicar migrations e criar usuários:
+1. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+2. Tente fazer login com:
+   - Usuário: jeff
+   - Senha: 1
+   
+   OU
+   
+   - Usuário: thiago
+   - Senha: 1
+
+================================================================================
+  PROBLEMA COM SQLITE NO FLY.IO
+================================================================================
+
+⚠️ IMPORTANTE: SQLite no Fly.io é volátil!
+- O banco de dados é perdido quando a máquina reinicia
+- Para produção, use PostgreSQL (Fly.io oferece)
+
+Para configurar PostgreSQL no Fly.io:
+1. Crie um banco: fly postgres create --name chatbot-db
+2. Configure: fly secrets set DATABASE_URL="postgres://..."
+3. Faça deploy novamente
+
+Mas por enquanto, SQLite funciona para testes.
+
+================================================================================
+

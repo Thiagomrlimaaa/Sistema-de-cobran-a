@@ -1,0 +1,74 @@
+================================================================================
+  CORRIGIR ERRO 403 AO ENVIAR MENSAGENS
+================================================================================
+
+PROBLEMA:
+---------
+Erro HTTP 403 ao tentar enviar mensagens em massa.
+Isso geralmente é causado por token CSRF inválido ou expirado.
+
+CORREÇÕES APLICADAS:
+--------------------
+✅ Verificação se token CSRF existe antes de enviar
+✅ Recarregamento automático da página se token estiver inválido
+✅ credentials: 'same-origin' adicionado para garantir envio de cookies
+✅ Logs de debug para identificar problema
+✅ Fallback para obter CSRF token do input hidden do Django
+
+================================================================================
+  O QUE FOI FEITO
+================================================================================
+
+1. TEMPLATE (bot_control.html):
+-------------------------------
+- Adicionado {% csrf_token %} no template
+- Função getCookie() melhorada para buscar token do input hidden também
+- Verificação se token existe antes de enviar requisição
+- Recarregamento automático se token estiver inválido
+- credentials: 'same-origin' adicionado
+
+2. TRATAMENTO DE ERRO 403:
+--------------------------
+- Se receber 403, recarrega página automaticamente
+- Mensagem clara para o usuário
+- Logs de debug no console
+
+================================================================================
+  PRÓXIMO PASSO: FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  SE AINDA DER ERRO 403
+================================================================================
+
+1. Verificar se está logado:
+   - Faça logout e login novamente
+   - Recarregue a página (F5)
+
+2. Verificar console do navegador:
+   - Abra DevTools (F12)
+   - Veja se há erros no console
+   - Verifique se o token CSRF está sendo obtido
+
+3. Verificar cookies:
+   - Abra DevTools → Application → Cookies
+   - Verifique se o cookie 'csrftoken' existe
+   - Se não existir, faça login novamente
+
+================================================================================
+  NOTA IMPORTANTE
+================================================================================
+
+O erro 403 geralmente acontece quando:
+- Sessão expirada (precisa fazer login novamente)
+- Token CSRF inválido (recarregar página resolve)
+- Cookie não está sendo enviado (credentials: 'same-origin' resolve)
+
+As correções aplicadas devem resolver o problema automaticamente.
+
+================================================================================
+

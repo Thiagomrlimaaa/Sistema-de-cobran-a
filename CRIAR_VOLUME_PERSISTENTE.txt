@@ -1,0 +1,60 @@
+================================================================================
+  CRIAR VOLUME PERSISTENTE PARA SQLITE
+================================================================================
+
+PROBLEMA:
+---------
+SQLite no Fly.io é volátil - perde dados quando a máquina reinicia.
+Isso causa erro 500 porque as tabelas são perdidas.
+
+SOLUÇÃO:
+--------
+Criar um volume persistente para armazenar o banco SQLite.
+
+================================================================================
+  PASSO 1: CRIAR VOLUME
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" volumes create db_data --size 1 --region gru -a chatbot-cobrana-silent-feather-3785
+
+Isso cria um volume de 1GB na região gru (mesma do app).
+
+================================================================================
+  PASSO 2: CONFIGURAR FLY.TOML
+================================================================================
+
+Adicionar configuração de volume no fly.toml (já será feito automaticamente).
+
+================================================================================
+  PASSO 3: ATUALIZAR SETTINGS.PY
+================================================================================
+
+Configurar Django para usar o volume persistente para o banco SQLite.
+
+================================================================================
+  PASSO 4: FAZER DEPLOY
+================================================================================
+
+Depois de criar o volume e atualizar a configuração, fazer deploy:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  APÓS DEPLOY
+================================================================================
+
+1. Aplicar migrations:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py migrate --noinput"
+
+2. Criar usuários (se necessário):
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+   python manage.py shell
+   (criar usuários como antes)
+   exit()
+
+3. Testar login
+
+================================================================================
+

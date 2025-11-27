@@ -1,0 +1,96 @@
+================================================================================
+  VERIFICAR POR QUE QR CODE NÃO APARECE
+================================================================================
+
+PROBLEMA:
+---------
+Bot fica em estado "connecting" mas QR Code nunca é gerado.
+
+POSSÍVEIS CAUSAS:
+-----------------
+1. Chromium não está instalado ou não está sendo encontrado
+2. WPPConnect não consegue iniciar o navegador
+3. Erro silencioso na inicialização
+4. Timeout na geração do QR Code
+
+================================================================================
+  PASSO 1: VERIFICAR LOGS DO BOT
+================================================================================
+
+Conecte via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+
+# Ver logs do bot
+cat /tmp/bot.log
+
+# Ou ver em tempo real
+tail -f /tmp/bot.log
+
+Procure por:
+- "✅ Chromium encontrado em: /usr/bin/chromium"
+- "🔧 Iniciando WPPConnect..."
+- "🔧 Chromium path:"
+- "✅ QR Code gerado!"
+- "❌ Erro ao inicializar WhatsApp"
+- Qualquer mensagem de erro relacionada a Chrome/Chromium/Puppeteer
+
+================================================================================
+  PASSO 2: VERIFICAR SE CHROMIUM ESTÁ INSTALADO
+================================================================================
+
+Dentro do SSH:
+
+# Verificar se Chromium existe
+which chromium
+ls -la /usr/bin/chromium
+
+# Verificar versão
+chromium --version
+
+# Verificar variáveis de ambiente
+echo $PUPPETEER_EXECUTABLE_PATH
+echo $CHROMIUM_PATH
+
+================================================================================
+  PASSO 3: TESTAR BOT MANUALMENTE
+================================================================================
+
+Dentro do SSH:
+
+# Ver status do bot
+curl http://localhost:3001/status
+
+# Ver logs em tempo real enquanto tenta iniciar
+tail -f /tmp/bot.log &
+curl -X POST http://localhost:3001/start
+
+# Ver QR Code
+curl http://localhost:3001/qr
+
+================================================================================
+  PASSO 4: VERIFICAR PROCESSOS
+================================================================================
+
+Dentro do SSH:
+
+# Ver se o bot está rodando
+ps aux | grep node
+
+# Ver se há processos do Chromium
+ps aux | grep chromium
+
+================================================================================
+  SE CHROMIUM NÃO ESTIVER INSTALADO
+================================================================================
+
+Se o Chromium não estiver instalado, fazer deploy novamente:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+O Dockerfile já está configurado para instalar Chromium.
+
+================================================================================
+

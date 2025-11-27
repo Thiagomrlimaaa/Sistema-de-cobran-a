@@ -35,10 +35,25 @@ DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split() if not DEBUG else ["*"]
 
 # CSRF Trusted Origins (necessário para Fly.io)
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split() if os.getenv("CSRF_TRUSTED_ORIGINS") else []
-if not CSRF_TRUSTED_ORIGINS and not DEBUG:
-    # Se não definido e em produção, usar ALLOWED_HOSTS
-    CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host != "*"]
+CSRF_TRUSTED_ORIGINS = []
+
+# Primeiro, verificar se está definido via variável de ambiente
+csrf_env = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+if csrf_env:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_env.split() if origin.strip()]
+
+# Se não definido e em produção, usar ALLOWED_HOSTS
+if not CSRF_TRUSTED_ORIGINS and not DEBUG and ALLOWED_HOSTS:
+    CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host and host != "*"]
+
+# Em desenvolvimento, permitir localhost
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
+
+# Garantir que o domínio do Fly.io está sempre incluído (fallback)
+fly_domain = "https://chatbot-cobrana-silent-feather-3785.fly.dev"
+if fly_domain not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(fly_domain)
 
 
 # Application definition
@@ -108,10 +123,23 @@ if DATABASE_URL:
     }
 else:
     # Usar SQLite (gratuito)
+    # No Fly.io, usar volume persistente se disponível, senão usar diretório padrão
+    db_path = os.getenv('DATABASE_PATH', str(BASE_DIR / 'db.sqlite3'))
+    # Se estiver no Fly.io e houver volume montado em /data, usar ele
+    # Criar diretório /data se não existir (para quando volume for montado)
+    data_dir = Path('/data')
+    if data_dir.exists() and data_dir.is_dir():
+        db_path = '/data/db.sqlite3'
+        # Garantir que o diretório existe e tem permissões
+        try:
+            data_dir.mkdir(parents=True, exist_ok=True)
+        except:
+            pass
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': db_path,
         }
     }
 
@@ -162,6 +190,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Authentication settings
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# Session and CSRF cookie settings for HTTPS (Fly.io)
+SESSION_COOKIE_SECURE = not DEBUG  # True em produção (HTTPS)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = not DEBUG  # True em produção (HTTPS)
+CSRF_COOKIE_HTTPONLY = False  # False para permitir JavaScript ler o cookie (necessário para AJAX)
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

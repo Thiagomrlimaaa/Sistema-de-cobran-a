@@ -1,0 +1,71 @@
+================================================================================
+  CONFIGURAR VOLUME PERSISTENTE PARA SQLITE
+================================================================================
+
+✅ CORREÇÕES APLICADAS:
+-----------------------
+1. ✅ Volume será criado (comando abaixo)
+2. ✅ fly.toml configurado para montar volume em /data
+3. ✅ settings.py configurado para usar /data/db.sqlite3
+
+================================================================================
+  PASSO 1: CRIAR VOLUME
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" volumes create db_data --size 1 --region gru -a chatbot-cobrana-silent-feather-3785
+
+Isso cria um volume de 1GB que persiste mesmo quando a máquina reinicia.
+
+================================================================================
+  PASSO 2: FAZER DEPLOY
+================================================================================
+
+Após criar o volume, fazer deploy:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+O volume será montado automaticamente em /data e o banco será salvo lá.
+
+================================================================================
+  PASSO 3: APLICAR MIGRATIONS
+================================================================================
+
+Após o deploy, aplicar migrations:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py migrate --noinput"
+
+================================================================================
+  PASSO 4: CRIAR USUÁRIOS
+================================================================================
+
+Criar usuários (se necessário):
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+python manage.py shell
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+if not User.objects.filter(username='jeff').exists():
+    User.objects.create_user('jeff', password='1')
+if not User.objects.filter(username='thiago').exists():
+    User.objects.create_user('thiago', password='1')
+
+exit()
+exit
+
+================================================================================
+  BENEFÍCIOS
+================================================================================
+
+✅ Banco de dados persiste mesmo quando a máquina reinicia
+✅ Usuários e dados não são perdidos
+✅ Migrations não precisam ser reaplicadas
+✅ Sistema mais estável
+
+================================================================================
+

@@ -1,0 +1,72 @@
+================================================================================
+  CONFIGURAR VOLUME PERSISTENTE (APÓS MIGRATIONS)
+================================================================================
+
+✅ DEPLOY CONCLUÍDO
+-------------------
+O deploy foi feito com sucesso sem volume (temporário).
+
+================================================================================
+  AGORA: CONFIGURAR VOLUME PERSISTENTE
+================================================================================
+
+Para fazer o SQLite persistir, precisamos:
+
+1. Parar máquinas antigas (que não têm volume)
+2. Adicionar mount no fly.toml
+3. Fazer deploy novamente (criará nova máquina com volume)
+
+OU usar PostgreSQL (mais confiável):
+
+1. Criar PostgreSQL:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" postgres create --name chatbot-db --region gru
+
+2. Obter URL de conexão:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" postgres connect -a chatbot-db
+
+3. Configurar no app:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" secrets set DATABASE_URL="postgres://..." -a chatbot-cobrana-silent-feather-3785
+
+4. Fazer deploy
+
+================================================================================
+  POR ENQUANTO: TESTAR LOGIN
+================================================================================
+
+O app deve estar funcionando agora. Teste fazer login com:
+- Usuário: jeff
+- Senha: 1
+
+OU
+
+- Usuário: thiago  
+- Senha: 1
+
+Se os usuários não existirem, criar via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+python manage.py shell
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+if not User.objects.filter(username='jeff').exists():
+    User.objects.create_user('jeff', password='1')
+if not User.objects.filter(username='thiago').exists():
+    User.objects.create_user('thiago', password='1')
+
+exit()
+exit
+
+================================================================================
+  IMPORTANTE
+================================================================================
+
+⚠️ SEM VOLUME: Os dados serão perdidos quando a máquina reiniciar.
+✅ COM VOLUME: Os dados persistem permanentemente.
+
+Recomendo configurar PostgreSQL para produção (mais confiável que SQLite).
+
+================================================================================
+

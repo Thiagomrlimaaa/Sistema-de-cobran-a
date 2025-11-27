@@ -1,0 +1,59 @@
+================================================================================
+  CORRIGIR ERRO: Cannot GET /
+================================================================================
+
+PROBLEMA:
+---------
+O erro "Cannot GET /" significa que o Express (bot Node.js) está respondendo
+na porta 8000, mas o Django não está rodando.
+
+CAUSA:
+------
+O script pode não estar iniciando o Django corretamente, ou o bot está
+capturando a porta 8000 antes do Django.
+
+SOLUÇÃO APLICADA:
+-----------------
+✅ Script corrigido para garantir que Django seja o processo principal
+✅ Bot configurado para rodar na porta 3001
+✅ Adicionado delay maior para bot iniciar
+
+================================================================================
+  FAZER DEPLOY DA CORREÇÃO
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  VERIFICAR LOGS APÓS DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "Iniciando Django na porta 8000..."
+- "Starting gunicorn"
+- "Bot API rodando na porta 3001"
+
+Se aparecer "Cannot GET /", significa que o bot ainda está na porta 8000.
+
+================================================================================
+  ALTERNATIVA: RODAR APENAS DJANGO
+================================================================================
+
+Se o problema persistir, podemos rodar apenas o Django primeiro e depois
+configurar o bot separadamente.
+
+Para isso, reverta o fly.toml:
+
+[processes]
+  app = 'gunicorn --bind :8000 --workers 2 cobranca_chatbot.wsgi'
+
+E configure o bot para rodar localmente ou em outro serviço.
+
+================================================================================
+

@@ -1,0 +1,99 @@
+================================================================================
+  DIAGNOSTICAR POR QUE QR CODE NÃO ESTÁ SENDO GERADO
+================================================================================
+
+PROBLEMA:
+---------
+Bot fica em estado "connecting" mas QR Code nunca é gerado.
+
+PRÓXIMOS PASSOS:
+----------------
+1. Verificar logs do bot para identificar o erro
+2. Verificar se Chromium está funcionando
+3. Adicionar mais tratamento de erros
+
+================================================================================
+  COMANDO 1: VER LOGS DO BOT
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+
+# Ver logs do bot
+cat /tmp/bot.log
+
+# Ou ver em tempo real
+tail -f /tmp/bot.log
+
+Procure por:
+- "✅ Chromium encontrado"
+- "🔧 Iniciando WPPConnect"
+- "✅ QR Code gerado"
+- "❌ Erro"
+- "Checking is logged"
+
+================================================================================
+  COMANDO 2: VERIFICAR PROCESSOS
+================================================================================
+
+Dentro do SSH:
+
+# Ver processos do Node.js
+ps aux | grep node
+
+# Ver processos do Chromium
+ps aux | grep chromium
+
+# Ver processos do Puppeteer
+ps aux | grep puppeteer
+
+================================================================================
+  COMANDO 3: TESTAR BOT MANUALMENTE
+================================================================================
+
+Dentro do SSH:
+
+# Ver status
+curl http://localhost:3001/status
+
+# Parar bot se estiver travado
+curl -X POST http://localhost:3001/stop
+
+# Iniciar bot novamente
+curl -X POST http://localhost:3001/start
+
+# Aguardar 30 segundos
+sleep 30
+
+# Ver QR Code
+curl http://localhost:3001/qr
+
+================================================================================
+  COMANDO 4: VERIFICAR CHROMIUM
+================================================================================
+
+Dentro do SSH:
+
+which chromium
+chromium --version
+ls -la /usr/bin/chromium
+
+================================================================================
+  POSSÍVEIS SOLUÇÕES
+================================================================================
+
+1. Se Chromium não estiver instalado:
+   - Fazer deploy novamente
+
+2. Se WPPConnect estiver travado:
+   - Parar e reiniciar o bot
+   - Limpar sessão antiga
+
+3. Se houver erro de memória:
+   - Aumentar memória da máquina no Fly.io
+
+================================================================================
+

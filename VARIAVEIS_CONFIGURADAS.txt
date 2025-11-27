@@ -1,0 +1,62 @@
+================================================================================
+  VARIÁVEIS DE AMBIENTE CONFIGURADAS NO FLY.IO
+================================================================================
+
+✅ CONFIGURADO:
+--------------
+1. ✅ DJANGO_ALLOWED_HOSTS = chatbot-cobrana-silent-feather-3785.fly.dev
+2. ✅ CSRF_TRUSTED_ORIGINS = https://chatbot-cobrana-silent-feather-3785.fly.dev
+3. ✅ DJANGO_DEBUG = False
+
+================================================================================
+  PRÓXIMOS PASSOS
+================================================================================
+
+1. FAZER DEPLOY DAS CORREÇÕES
+-----------------------------
+As correções já foram aplicadas nos arquivos:
+- ✅ fly.toml (Celery corrigido)
+- ✅ cobranca_chatbot/settings.py (CSRF adicionado)
+
+Agora precisa fazer commit e push:
+
+# Se tiver Git Bash ou Git instalado:
+git add fly.toml cobranca_chatbot/settings.py
+git commit -m "Fix: Corrigir Celery e CSRF para Fly.io"
+git push origin main
+
+# Ou use o GitHub Desktop se tiver instalado
+
+2. VERIFICAR NO WEBSITE
+------------------------
+Acesse: https://fly.io/apps/chatbot-cobrana-silent-feather-3785
+
+Vá em "Secrets" e confirme que as 3 variáveis estão lá:
+- DJANGO_ALLOWED_HOSTS
+- CSRF_TRUSTED_ORIGINS
+- DJANGO_DEBUG
+
+3. AGUARDAR DEPLOY AUTOMÁTICO
+------------------------------
+Após o push, o Fly.io fará deploy automático.
+
+Ou force um deploy manual:
+- No website, vá em "Deployments" > "Deploy latest image"
+
+4. TESTAR O APP
+---------------
+Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev
+
+O erro CSRF deve estar resolvido!
+
+================================================================================
+  VERIFICAR LOGS
+================================================================================
+
+Para ver se está funcionando:
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs
+
+Ou no website: https://fly.io/apps/chatbot-cobrana-silent-feather-3785/logs
+
+================================================================================
+

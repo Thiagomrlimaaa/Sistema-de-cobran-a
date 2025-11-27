@@ -1,0 +1,69 @@
+================================================================================
+  APLICAR MIGRATIONS - CORRIGIR TABELA django_session
+================================================================================
+
+PROBLEMA:
+---------
+Erro: no such table: django_session
+O banco de dados não tem todas as tabelas criadas.
+
+SOLUÇÃO:
+--------
+Aplicar migrations manualmente via SSH.
+
+================================================================================
+  COMANDO PARA EXECUTAR
+================================================================================
+
+Execute este comando:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py migrate --noinput"
+
+Isso vai criar todas as tabelas, incluindo:
+- django_session
+- auth_user
+- E todas as outras tabelas necessárias
+
+================================================================================
+  VERIFICAR SE FUNCIONOU
+================================================================================
+
+Após aplicar migrations:
+1. Aguarde alguns segundos
+2. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/dashboard/
+3. Deve funcionar normalmente
+
+Se ainda der erro, tente fazer login novamente:
+https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+
+================================================================================
+  PROBLEMA COM SQLITE NO FLY.IO
+================================================================================
+
+⚠️ IMPORTANTE: SQLite no Fly.io é VOLÁTIL!
+- O banco de dados é perdido quando a máquina reinicia
+- Cada deploy pode recriar o banco
+- Para produção, use PostgreSQL
+
+O release_command no fly.toml já aplica migrations automaticamente,
+mas se o banco for perdido, precisa aplicar manualmente.
+
+================================================================================
+  SOLUÇÃO DEFINITIVA: POSTGRESQL
+================================================================================
+
+Para evitar esse problema, use PostgreSQL:
+
+1. Criar banco PostgreSQL:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" postgres create --name chatbot-db
+
+2. Obter URL do banco:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" postgres connect -a chatbot-db
+
+3. Configurar variável de ambiente:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" secrets set DATABASE_URL="postgres://..." -a chatbot-cobrana-silent-feather-3785
+
+Mas por enquanto, SQLite funciona para testes.
+
+================================================================================
+

@@ -1,0 +1,54 @@
+================================================================================
+  CORRIGIR ERRO 500 NO LOGIN
+================================================================================
+
+PROBLEMA:
+---------
+Erro 500 ao tentar fazer login após autenticação bem-sucedida.
+
+CAUSA:
+------
+Faltava LOGIN_REDIRECT_URL no settings.py.
+O Django não sabia para onde redirecionar após o login.
+
+SOLUÇÃO APLICADA:
+-----------------
+✅ Adicionado LOGIN_REDIRECT_URL = '/dashboard/'
+✅ Adicionado LOGIN_URL = '/accounts/login/'
+✅ Adicionado LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+================================================================================
+  PRÓXIMOS PASSOS
+================================================================================
+
+1. FAZER DEPLOY DA CORREÇÃO
+----------------------------
+O código foi corrigido. Agora precisa fazer deploy:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+2. AGUARDAR DEPLOY
+------------------
+Aguarde alguns minutos para o deploy terminar.
+
+3. TESTAR LOGIN
+---------------
+Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+Tente fazer login novamente.
+Agora deve redirecionar para /dashboard/ após login bem-sucedido.
+
+================================================================================
+  CONFIGURAÇÕES ADICIONADAS
+================================================================================
+
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+Isso garante que:
+- Login redireciona para /dashboard/
+- Logout redireciona para /accounts/login/
+- URLs estão corretas
+
+================================================================================
+

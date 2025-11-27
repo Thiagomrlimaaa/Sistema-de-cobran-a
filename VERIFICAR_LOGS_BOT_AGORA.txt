@@ -1,0 +1,83 @@
+================================================================================
+  VERIFICAR LOGS DO BOT PARA DIAGNOSTICAR QR CODE
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+----------------------
+1. ❌ Erro CSRF no endpoint /api/bot/control/ (corrigido)
+2. ❌ Bot não está gerando QR Code (precisa verificar logs)
+
+================================================================================
+  PASSO 1: VERIFICAR LOGS DO BOT DIRETAMENTE
+================================================================================
+
+Conecte via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+
+# Ver logs do bot
+cat /tmp/bot.log
+
+# Ou ver em tempo real
+tail -f /tmp/bot.log
+
+Procure por:
+- "✅ Chromium encontrado em: /usr/bin/chromium"
+- "🔧 Iniciando WPPConnect..."
+- "🔧 Chromium path:"
+- "✅ QR Code gerado!"
+- "❌ Erro ao inicializar WhatsApp"
+- Qualquer mensagem de erro
+
+================================================================================
+  PASSO 2: VERIFICAR SE CHROMIUM ESTÁ INSTALADO
+================================================================================
+
+Dentro do SSH:
+
+# Verificar se Chromium existe
+which chromium
+ls -la /usr/bin/chromium
+
+# Verificar versão
+chromium --version
+
+# Verificar variáveis de ambiente
+echo $PUPPETEER_EXECUTABLE_PATH
+echo $CHROMIUM_PATH
+
+================================================================================
+  PASSO 3: TESTAR BOT MANUALMENTE
+================================================================================
+
+Dentro do SSH:
+
+# Testar se bot está respondendo
+curl http://localhost:3001/status
+
+# Testar iniciar bot
+curl -X POST http://localhost:3001/start
+
+# Ver QR Code
+curl http://localhost:3001/qr
+
+================================================================================
+  CORREÇÕES APLICADAS
+================================================================================
+
+✅ CSRF corrigido no BotControlView
+✅ Logs de debug adicionados no bot
+✅ Tratamento de erros melhorado
+
+================================================================================
+  PRÓXIMO PASSO
+================================================================================
+
+1. Verificar logs do bot para ver se WPPConnect está iniciando
+2. Se Chromium não estiver instalado, fazer deploy novamente
+3. Se houver erro específico, corrigir baseado no erro
+
+================================================================================
+

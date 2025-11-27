@@ -1,0 +1,73 @@
+================================================================================
+  CORRIGIR: WPPCONNECT TRAVADO EM "WAITING PAGE LOAD"
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+----------------------
+WPPConnect está carregando a página do WhatsApp Web mas fica travado em
+"Waiting page load" e nunca gera o QR Code.
+
+CORREÇÕES APLICADAS:
+--------------------
+✅ waitForLogin: false (forçar geração de QR Code)
+✅ autoClose: 60000 (fechar após 60s se não conectar)
+✅ Limpeza melhorada de processos do Chromium
+✅ Limpeza de dados do navegador antigo antes de iniciar
+✅ Logs mais detalhados no catchQR
+✅ Tratamento melhorado de erros ao fechar navegador
+
+================================================================================
+  O QUE FOI FEITO
+================================================================================
+
+1. CONFIGURAÇÃO WPPCONNECT:
+---------------------------
+- waitForLogin: false - Força geração de QR Code mesmo se houver sessão antiga
+- autoClose: 60000 - Fecha automaticamente após 60s se não conectar
+- Limpa dados do navegador antigo antes de iniciar
+
+2. FUNÇÃO disconnect():
+----------------------
+- Tenta logout antes de fechar
+- Tratamento melhorado de erros
+- Limpeza mais suave de processos
+
+3. LIMPEZA DE SESSÃO:
+---------------------
+- Remove dados do navegador antigo antes de iniciar
+- Aguarda 3 segundos após limpar processos
+- Ignora erros de processos que não existem
+
+================================================================================
+  PRÓXIMO PASSO: FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  APÓS DEPLOY
+================================================================================
+
+1. Parar bot se estiver rodando:
+   - Clique em "Parar Bot" no dashboard
+   - Aguarde alguns segundos
+
+2. Iniciar bot novamente:
+   - Clique em "Iniciar Bot"
+   - O QR Code deve aparecer em alguns segundos
+
+3. Se ainda não aparecer:
+   - Verifique logs: cat /tmp/bot.log
+   - Procure por "✅ QR CODE GERADO!"
+
+================================================================================
+  NOTA IMPORTANTE
+================================================================================
+
+O waitForLogin: false força o WPPConnect a sempre gerar um novo QR Code,
+mesmo se houver uma sessão salva. Isso garante que o QR Code seja gerado.
+
+================================================================================
+

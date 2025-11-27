@@ -1,0 +1,84 @@
+================================================================================
+  TROUBLESHOOTING - ERRO 500 NO LOGIN
+================================================================================
+
+Para resolver, preciso saber:
+1. Qual é a mensagem de erro EXATA que aparece?
+2. O erro acontece ao clicar em "Entrar" ou após o login?
+
+================================================================================
+  SOLUÇÕES COMUNS
+================================================================================
+
+SOLUÇÃO 1: VERIFICAR LOGS
+--------------------------
+Execute e tente fazer login:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "Traceback" (mostra o erro completo)
+- "Error" ou "Exception"
+- Linhas em vermelho
+
+SOLUÇÃO 2: APLICAR MIGRATIONS
+------------------------------
+Conectar via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+python manage.py migrate
+
+SOLUÇÃO 3: VERIFICAR SE USUÁRIO EXISTE
+--------------------------------------
+Dentro do SSH:
+python manage.py shell
+
+No shell Python:
+from django.contrib.auth import get_user_model
+User = get_user_model()
+User.objects.all()
+
+Se não aparecer nenhum usuário, criar:
+python manage.py createsuperuser
+
+SOLUÇÃO 4: VERIFICAR BANCO DE DADOS
+------------------------------------
+Dentro do SSH:
+python manage.py showmigrations
+
+Se houver migrações não aplicadas (com [ ]), execute:
+python manage.py migrate
+
+================================================================================
+  ERROS COMUNS E SOLUÇÕES
+================================================================================
+
+ERRO: "No such table: clients_client"
+SOLUÇÃO: python manage.py migrate
+
+ERRO: "TemplateDoesNotExist"
+SOLUÇÃO: Verificar se templates estão no deploy
+
+ERRO: "OperationalError"
+SOLUÇÃO: Verificar conexão com banco de dados
+
+ERRO: "ImportError"
+SOLUÇÃO: Verificar se todas as dependências estão instaladas
+
+================================================================================
+  COMANDO RÁPIDO PARA DIAGNOSTICAR
+================================================================================
+
+Execute este comando para ver o erro completo:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785 | findstr /i "error traceback exception"
+
+Ou veja os logs em tempo real:
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+E tente fazer login enquanto os logs estão rodando.
+
+================================================================================
+

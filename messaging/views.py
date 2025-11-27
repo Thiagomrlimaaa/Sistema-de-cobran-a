@@ -202,22 +202,54 @@ class BotControlView(APIView):
         action_type = request.data.get("action", "start")  # start ou stop
 
         try:
-            if action_type == "start":
-                response = requests.post(self._get_bot_url("/start"), timeout=30)
-            elif action_type == "stop":
-                response = requests.post(self._get_bot_url("/stop"), timeout=10)
-            else:
-                return Response(
-                    {"error": "Ação inválida. Use 'start' ou 'stop'"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            # Tentar conectar com retry (o bot pode estar iniciando)
+            max_retries = 3
+            last_exception = None
+            
+            for attempt in range(max_retries):
+                try:
+                    if action_type == "start":
+                        response = requests.post(self._get_bot_url("/start"), timeout=30)
+                    elif action_type == "stop":
+                        response = requests.post(self._get_bot_url("/stop"), timeout=10)
+                    else:
+                        return Response(
+                            {"error": "Ação inválida. Use 'start' ou 'stop'"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
 
-            response.raise_for_status()
-            return Response(response.json(), status=status.HTTP_200_OK)
-        except requests.exceptions.RequestException as exc:
+                    response.raise_for_status()
+                    return Response(response.json(), status=status.HTTP_200_OK)
+                except requests.exceptions.ConnectionError as conn_exc:
+                    last_exception = conn_exc
+                    if attempt < max_retries - 1:
+                        import time
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(f"Tentativa {attempt + 1}/{max_retries} falhou ao conectar ao bot. Aguardando 3 segundos...")
+                        time.sleep(3)
+                    else:
+                        # Última tentativa falhou
+                        return Response(
+                            {"error": f"Erro ao controlar bot: Não foi possível conectar ao bot na porta 3001. O bot pode estar iniciando ainda. Tente novamente em alguns segundos. Detalhes: {str(conn_exc)}"},
+                            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        )
+                except requests.exceptions.RequestException as req_exc:
+                    # Outros erros HTTP (não de conexão) - não fazer retry
+                    return Response(
+                        {"error": f"Erro ao controlar bot: {str(req_exc)}"},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    )
+            
+            # Se chegou aqui, todas as tentativas falharam
             return Response(
-                {"error": f"Erro ao controlar bot: {str(exc)}"},
+                {"error": f"Erro ao controlar bot após {max_retries} tentativas: {str(last_exception)}"},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as exc:
+            return Response(
+                {"error": f"Erro inesperado ao controlar bot: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -285,24 +317,29 @@ class BotSendBulkView(APIView):
             )
         
         # Sincronizar contatos antes de enviar (verificar se existem no WhatsApp)
+        # IMPORTANTE: Não bloquear envio se sincronização falhar
         try:
             contacts_to_sync = [
                 {"phone": client.formatted_phone, "name": client.name}
                 for client in clients
             ]
+            # Fazer sincronização em background (não esperar)
             sync_response = requests.post(
                 self._get_bot_url("/sync-contacts"),
                 json={"contacts": contacts_to_sync},
-                timeout=30,
+                timeout=10,  # Timeout curto - não bloquear envio
             )
             if sync_response.status_code == 200:
                 sync_result = sync_response.json()
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.info(f"Contatos sincronizados: {sync_result.get('verified', 0)} verificados, {sync_result.get('not_found', 0)} não encontrados")
-        except requests.exceptions.RequestException:
-            # Se falhar a sincronização, continua mesmo assim
-            pass
+        except requests.exceptions.RequestException as sync_error:
+            # Se falhar a sincronização, continua mesmo assim (não é crítico)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Sincronização de contatos falhou (não crítico): {str(sync_error)}")
+            # Continuar com o envio mesmo se sincronização falhar
 
         # Preparar lista de telefones e renderizar mensagem para cada cliente
         from calendar import monthrange

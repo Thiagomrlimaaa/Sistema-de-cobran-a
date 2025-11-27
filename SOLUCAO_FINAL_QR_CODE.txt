@@ -1,0 +1,66 @@
+================================================================================
+  SOLUÇÃO FINAL: QR CODE NÃO ESTÁ SENDO GERADO
+================================================================================
+
+PROBLEMA:
+---------
+QR Code não está sendo gerado. Bot fica em estado "connecting" indefinidamente.
+
+CORREÇÕES APLICADAS:
+--------------------
+✅ Logs mais detalhados no catchQR (tentativas, urlCode)
+✅ Logs mais detalhados no statusFind (todos os status)
+✅ Criação automática do diretório userDataDir
+✅ disableWelcome e updatesLog habilitados para debug
+✅ Tratamento de mais status de sessão
+
+================================================================================
+  PRÓXIMO PASSO: VERIFICAR LOGS
+================================================================================
+
+O problema pode ser:
+1. WPPConnect travando na verificação de login
+2. Chromium não funcionando corretamente
+3. Sessão antiga causando conflito
+
+Execute para ver logs:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+cat /tmp/bot.log | tail -100
+
+Procure por:
+- "✅ QR Code gerado!"
+- "📊 Status da sessão:"
+- "❌ Erro"
+- "Checking is logged"
+
+================================================================================
+  SE LOGS MOSTRAREM "Checking is logged"
+================================================================================
+
+Isso significa que o WPPConnect está verificando se já está logado.
+Pode demorar alguns minutos. Aguarde ou:
+
+1. Parar bot:
+   curl -X POST http://localhost:3001/stop
+
+2. Limpar sessão:
+   rm -rf /code/cobranca-bot/tokens/cobranca
+
+3. Iniciar bot novamente:
+   curl -X POST http://localhost:3001/start
+
+================================================================================
+  FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+As correções devem ajudar a identificar o problema nos logs.
+
+================================================================================
+

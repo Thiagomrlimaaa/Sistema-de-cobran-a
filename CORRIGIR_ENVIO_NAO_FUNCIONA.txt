@@ -1,0 +1,80 @@
+================================================================================
+  CORRIGIR: ENVIO DE MENSAGENS NÃO ESTÁ FUNCIONANDO
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+----------------------
+Bot tenta enviar mensagens mas não consegue. Logs mostram que está tentando
+mas não há mensagem de sucesso ou erro detalhado.
+
+CORREÇÕES APLICADAS:
+--------------------
+✅ Verificação de conexão antes de enviar (isConnected)
+✅ Timeout de 30 segundos para evitar travamento
+✅ Logs muito mais detalhados (tipo de erro, stack, etc)
+✅ Verificação se método sendText existe
+✅ Retry com delay de 2 segundos
+✅ Verificação de conexão antes de cada envio em massa
+
+================================================================================
+  O QUE FOI FEITO
+================================================================================
+
+1. FUNÇÃO sendMessage():
+-----------------------
+- Verifica isConnected() antes de enviar
+- Timeout de 30 segundos para evitar travamento
+- Logs detalhados de cada etapa
+- Verifica se método sendText existe
+- Retry automático com delay de 2 segundos
+- Logs completos de erros (stack, tipo, mensagem)
+
+2. ENVIO EM MASSA:
+------------------
+- Verifica conexão antes de cada envio
+- Logs mais detalhados
+- Continua mesmo se um falhar
+
+================================================================================
+  PRÓXIMO PASSO: FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  APÓS DEPLOY: VERIFICAR LOGS
+================================================================================
+
+Após tentar enviar, verifique os logs:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+cat /tmp/bot.log | grep -E "ENVIO|BULK|SEND"
+
+Procure por:
+- "[ENVIO] ✅ Sucesso"
+- "[ENVIO] ❌ Erro"
+- "[ENVIO] Cliente verificado como conectado"
+- Qualquer mensagem de erro detalhada
+
+================================================================================
+  POSSÍVEIS CAUSAS
+================================================================================
+
+1. Número não está no WhatsApp:
+   - O WhatsApp pode bloquear envios para números não verificados
+   - Tente adicionar o número aos contatos primeiro
+
+2. Rate limit do WhatsApp:
+   - Muitas mensagens muito rápido podem causar bloqueio
+   - O código já tem delay de 2 segundos
+
+3. Cliente desconectado:
+   - Verificação isConnected() deve detectar isso
+   - Se desconectar, precisa reconectar
+
+================================================================================
+

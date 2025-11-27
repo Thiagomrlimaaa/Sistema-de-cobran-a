@@ -1,0 +1,63 @@
+================================================================================
+  SOLUÇÃO - ERRO DE PERMISSÃO AO INSTALAR FLY CLI
+================================================================================
+
+PROBLEMA:
+---------
+O arquivo flyctl.exe está sendo usado ou precisa de permissões de admin.
+
+SOLUÇÃO 1: FECHAR PROCESSOS E TENTAR NOVAMENTE
+-----------------------------------------------
+1. Feche todos os terminais PowerShell
+2. Abra PowerShell como ADMINISTRADOR (botão direito > Executar como administrador)
+3. Execute:
+   iwr https://fly.io/install.ps1 -useb | iex
+
+SOLUÇÃO 2: REMOVER MANUALMENTE E REINSTALAR
+--------------------------------------------
+1. Feche todos os terminais
+2. Abra PowerShell como ADMINISTRADOR
+3. Execute:
+   Remove-Item -Path "$env:USERPROFILE\.fly" -Recurse -Force -ErrorAction SilentlyContinue
+   iwr https://fly.io/install.ps1 -useb | iex
+
+SOLUÇÃO 3: USAR WEBSITE (MAIS FÁCIL - RECOMENDADO)
+--------------------------------------------------
+Não precisa instalar CLI! Use o website:
+
+1. Acesse: https://fly.io/apps/chatbot-cobrana-silent-feather-3785
+2. Vá em "Secrets" (menu lateral)
+3. Adicione as variáveis:
+   - DJANGO_ALLOWED_HOSTS = chatbot-cobrana-silent-feather-3785.fly.dev
+   - CSRF_TRUSTED_ORIGINS = https://chatbot-cobrana-silent-feather-3785.fly.dev
+   - DJANGO_DEBUG = False
+4. Clique em "Save"
+5. O app será reiniciado automaticamente
+
+SOLUÇÃO 4: USAR GIT PARA DEPLOY
+--------------------------------
+Se só precisa fazer deploy, use Git:
+
+1. Faça commit das correções:
+   git add fly.toml cobranca_chatbot/settings.py
+   git commit -m "Fix: Corrigir Celery e CSRF"
+   git push origin main
+
+2. O Fly.io faz deploy automático via GitHub
+
+================================================================================
+  VERIFICAR SE FLY CLI JÁ ESTÁ INSTALADO
+================================================================================
+
+Execute no PowerShell:
+   $env:PATH -split ';' | Select-String fly
+
+Se aparecer algo como "C:\Users\AVELL\.fly\bin", o Fly CLI já está instalado!
+
+Teste:
+   fly version
+
+Se funcionar, não precisa reinstalar!
+
+================================================================================
+

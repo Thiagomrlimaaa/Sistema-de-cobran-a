@@ -1,0 +1,55 @@
+================================================================================
+  SOLUÇÃO - FLY CLI NÃO ENCONTRADO
+================================================================================
+
+O Fly CLI não está no PATH do PowerShell.
+
+OPÇÃO 1: INSTALAR FLY CLI
+--------------------------
+1. Baixe: https://fly.io/docs/hands-on/install-flyctl/
+2. Ou via PowerShell (como Admin):
+   powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
+
+3. Reinicie o PowerShell após instalar
+
+OPÇÃO 2: USAR VIA WEBSITE
+--------------------------
+Acesse: https://fly.io/apps/chatbot-cobrana-silent-feather-3785
+
+Lá você pode:
+- Ver logs
+- Configurar variáveis de ambiente
+- Ver status
+
+OPÇÃO 3: USAR RENDER.COM (MAIS FÁCIL)
+-------------------------------------
+Render.com é mais fácil que Fly.io:
+- Interface web completa
+- Não precisa de CLI
+- PostgreSQL gratuito
+- Mais simples de configurar
+
+Veja: DEPLOY_RENDER.txt
+
+================================================================================
+  COMANDOS APÓS INSTALAR FLY CLI
+================================================================================
+
+# Aplicar migrations
+fly ssh console -C "python manage.py migrate"
+
+# Criar superusuário
+fly ssh console
+python manage.py createsuperuser
+exit
+
+# Configurar secrets
+fly secrets set DJANGO_SECRET_KEY="sua-chave"
+fly secrets set DJANGO_DEBUG="False"
+fly secrets set DJANGO_ALLOWED_HOSTS="chatbot-cobrana-silent-feather-3785.fly.dev"
+
+# Abrir app
+fly apps open
+
+================================================================================
+

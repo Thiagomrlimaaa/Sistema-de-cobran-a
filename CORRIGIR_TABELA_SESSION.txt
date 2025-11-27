@@ -1,0 +1,61 @@
+================================================================================
+  CORRIGIR ERRO: no such table: django_session
+================================================================================
+
+PROBLEMA:
+---------
+Falta a tabela django_session no banco de dados.
+As migrations não foram aplicadas completamente.
+
+ERRO:
+-----
+sqlite3.OperationalError: no such table: django_session
+
+SOLUÇÃO:
+--------
+Aplicar migrations novamente.
+
+================================================================================
+  COMANDO PARA EXECUTAR
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "python manage.py migrate --noinput"
+
+Isso vai criar todas as tabelas, incluindo django_session.
+
+================================================================================
+  VERIFICAR SE FUNCIONOU
+================================================================================
+
+Após aplicar migrations:
+1. Aguarde alguns segundos
+2. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/dashboard/
+3. Deve funcionar normalmente
+
+================================================================================
+  PROBLEMA COM SQLITE NO FLY.IO
+================================================================================
+
+⚠️ IMPORTANTE: SQLite no Fly.io é VOLÁTIL!
+- O banco de dados é perdido quando a máquina reinicia
+- Cada deploy pode recriar o banco
+- Para produção, use PostgreSQL
+
+SOLUÇÃO TEMPORÁRIA:
+-------------------
+O release_command no fly.toml já aplica migrations automaticamente:
+release_command = 'python manage.py migrate --noinput'
+
+Mas se o banco for perdido, precisa aplicar manualmente.
+
+SOLUÇÃO DEFINITIVA:
+-------------------
+Usar PostgreSQL no Fly.io:
+1. Criar banco: fly postgres create --name chatbot-db
+2. Obter URL: fly postgres connect -a chatbot-db
+3. Configurar: fly secrets set DATABASE_URL="postgres://..."
+
+================================================================================
+

@@ -1,0 +1,49 @@
+================================================================================
+  CORRIGIR ERRO 500 - CSRF
+================================================================================
+
+PROBLEMA:
+---------
+Erro 500 após deploy das correções de CSRF.
+
+CAUSA:
+------
+A lógica do CSRF_TRUSTED_ORIGINS pode estar causando erro.
+
+SOLUÇÃO APLICADA:
+-----------------
+✅ Simplificada a lógica do CSRF_TRUSTED_ORIGINS
+✅ Adicionado fallback para garantir que o domínio sempre esteja incluído
+✅ Melhorado tratamento de erros
+
+================================================================================
+  PRÓXIMOS PASSOS
+================================================================================
+
+1. FAZER DEPLOY DA CORREÇÃO
+----------------------------
+O código foi corrigido. Agora precisa fazer deploy:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+2. AGUARDAR DEPLOY
+------------------
+Aguarde alguns minutos para o deploy terminar.
+
+3. TESTAR NOVAMENTE
+-------------------
+Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev
+Tente fazer login novamente.
+
+================================================================================
+  SE AINDA DER ERRO
+================================================================================
+
+Verificar logs:
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Verificar se a máquina está rodando:
+"%USERPROFILE%\.fly\bin\flyctl.exe" status -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+

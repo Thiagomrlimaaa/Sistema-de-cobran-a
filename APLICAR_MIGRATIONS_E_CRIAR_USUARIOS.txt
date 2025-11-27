@@ -1,0 +1,89 @@
+================================================================================
+  APLICAR MIGRATIONS E CRIAR USUÁRIOS
+================================================================================
+
+✅ DEPLOY CONCLUÍDO COM VOLUME
+-------------------------------
+Nova máquina foi criada com volume persistente anexado.
+
+================================================================================
+  PASSO 1: VERIFICAR VOLUME
+================================================================================
+
+Conecte via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH, verifique se o volume está montado:
+
+ls -la /data
+
+Deve mostrar o diretório /data (onde o banco será salvo).
+
+================================================================================
+  PASSO 2: APLICAR MIGRATIONS
+================================================================================
+
+Ainda dentro do SSH:
+
+python manage.py migrate --noinput
+
+Isso criará todas as tabelas no banco SQLite em /data/db.sqlite3.
+
+================================================================================
+  PASSO 3: CRIAR USUÁRIOS
+================================================================================
+
+Ainda dentro do SSH:
+
+python manage.py shell
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+# Criar jeff
+if not User.objects.filter(username='jeff').exists():
+    User.objects.create_user('jeff', password='1')
+    print('✅ Usuário jeff criado')
+else:
+    user = User.objects.get(username='jeff')
+    user.set_password('1')
+    user.save()
+    print('✅ Senha do jeff atualizada')
+
+# Criar thiago
+if not User.objects.filter(username='thiago').exists():
+    User.objects.create_user('thiago', password='1')
+    print('✅ Usuário thiago criado')
+else:
+    user = User.objects.get(username='thiago')
+    user.set_password('1')
+    user.save()
+    print('✅ Senha do thiago atualizada')
+
+exit()
+exit
+
+================================================================================
+  PASSO 4: TESTAR LOGIN
+================================================================================
+
+Após criar os usuários, teste o login:
+
+https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+
+Usuários:
+- jeff / 1
+- thiago / 1
+
+================================================================================
+  BENEFÍCIOS DO VOLUME PERSISTENTE
+================================================================================
+
+✅ Banco SQLite salvo em /data/db.sqlite3 (volume persistente)
+✅ Dados NÃO são perdidos quando a máquina reinicia
+✅ Usuários e clientes persistem permanentemente
+✅ Migrations aplicadas automaticamente no deploy (release_command)
+
+================================================================================
+

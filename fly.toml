@@ -16,26 +16,27 @@ console_command = '/code/manage.py shell'
   PORT = '8000'
 
 [processes]
-  app = 'gunicorn --bind :8000 --workers 2 cobranca_chatbot.wsgi'
-<<<<<<< HEAD
+  app = '/code/start_both.sh'
   # Celery desabilitado temporariamente - requer Redis configurado
   # celery = 'celery -A cobranca_chatbot.celery worker --loglevel=INFO'
-=======
-  celery = 'celery -A cobranca_chatbot.celery worker --loglevel=INFO'
->>>>>>> 154f9d3e2cb6ae4a79968b196eb7045f9f4111ca
 
 [http_service]
   internal_port = 8000
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
 
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+
+# Volume persistente para SQLite (será anexado automaticamente em novas máquinas)
+[[mounts]]
+  source = "db_data"
+  destination = "/data"
 
 [[statics]]
   guest_path = '/code/static'

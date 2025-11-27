@@ -1,0 +1,82 @@
+================================================================================
+  SOLUÇÃO FINAL - ERRO 500 NO LOGIN
+================================================================================
+
+CORREÇÕES APLICADAS NO CÓDIGO:
+-------------------------------
+✅ LOGIN_REDIRECT_URL = '/dashboard/'
+✅ LOGIN_URL = '/accounts/login/'
+✅ LOGOUT_REDIRECT_URL = '/accounts/login/'
+✅ SESSION_COOKIE_SECURE = True (para HTTPS)
+✅ CSRF_COOKIE_SECURE = True (para HTTPS)
+✅ CSRF_TRUSTED_ORIGINS configurado
+
+================================================================================
+  PROBLEMA: DEPLOY NÃO FOI FEITO
+================================================================================
+
+As correções estão no código LOCAL, mas ainda não foram deployadas no Fly.io!
+
+A máquina está rodando com a versão ANTIGA do código.
+
+================================================================================
+  SOLUÇÃO: FAZER DEPLOY
+================================================================================
+
+OPÇÃO 1: VIA CLI (RECOMENDADO)
+-------------------------------
+Execute no terminal:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+Aguarde o deploy terminar (pode levar 5-10 minutos).
+
+OPÇÃO 2: VIA WEBSITE
+--------------------
+1. Acesse: https://fly.io/apps/chatbot-cobrana-silent-feather-3785
+2. Vá em "Deployments" (no menu lateral)
+3. Clique em "Deploy latest image"
+4. Aguarde o deploy terminar
+
+OPÇÃO 3: VIA GIT (SE TIVER CONECTADO)
+--------------------------------------
+1. Faça commit das mudanças:
+   git add cobranca_chatbot/settings.py
+   git commit -m "Fix: Adicionar LOGIN_REDIRECT_URL e configurações de cookies"
+   git push origin main
+
+2. O Fly.io fará deploy automático (se configurado)
+
+================================================================================
+  APÓS O DEPLOY
+================================================================================
+
+1. Aguarde 2-3 minutos após o deploy terminar
+2. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+3. Tente fazer login novamente
+4. Deve redirecionar para /dashboard/ após login bem-sucedido
+
+================================================================================
+  VERIFICAR SE DEPLOY FUNCIONOU
+================================================================================
+
+Verificar status:
+"%USERPROFILE%\.fly\bin\flyctl.exe" status -a chatbot-cobrana-silent-feather-3785
+
+Ver logs (para ver se há erros):
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  SE AINDA DER ERRO APÓS DEPLOY
+================================================================================
+
+1. Verificar logs para ver erro específico
+2. Verificar se migrations foram aplicadas:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+   python manage.py migrate
+
+3. Verificar se usuário existe:
+   python manage.py createsuperuser
+
+================================================================================
+

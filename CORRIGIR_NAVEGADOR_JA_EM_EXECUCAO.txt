@@ -1,0 +1,71 @@
+================================================================================
+  CORRIGIR ERRO: NAVEGADOR JÁ EM EXECUÇÃO
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+----------------------
+Erro: "O navegador já está em execução para /code/cobranca-bot/tokens/cobranca"
+
+Isso acontece quando:
+- Bot foi iniciado anteriormente e não foi parado corretamente
+- Processo do Chromium ainda está rodando
+- Sessão antiga está travada
+
+CORREÇÕES APLICADAS:
+--------------------
+✅ Limpeza automática de processos do Chromium antes de iniciar
+✅ userDataDir único para cada sessão
+✅ Função disconnect() melhorada para matar processos
+✅ Tratamento específico para erro "navegador já em execução"
+✅ Aguarda 2 segundos após limpar processos
+
+================================================================================
+  O QUE FOI FEITO
+================================================================================
+
+1. FUNÇÃO initializeWhatsApp():
+-------------------------------
+- Limpa processos do Chromium antes de iniciar
+- Usa userDataDir único para evitar conflitos
+- Aguarda 2 segundos após limpar processos
+
+2. FUNÇÃO disconnect():
+----------------------
+- Agora é async e fecha cliente corretamente
+- Mata processos do Chromium/Puppeteer
+- Limpa sessão antiga
+
+3. TRATAMENTO DE ERRO:
+---------------------
+- Detecta erro "navegador já em execução"
+- Limpa sessão automaticamente
+- Sugere tentar iniciar novamente
+
+================================================================================
+  PRÓXIMO PASSO: FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  SE AINDA DER ERRO
+================================================================================
+
+1. Parar bot manualmente:
+   - Clique em "Parar Bot" no dashboard
+   - Aguarde alguns segundos
+   - Clique em "Iniciar Bot" novamente
+
+2. Via SSH (se necessário):
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+   
+   Dentro do SSH:
+   curl -X POST http://localhost:3001/stop
+   sleep 5
+   pkill -f chromium || true
+   curl -X POST http://localhost:3001/start
+
+================================================================================
+

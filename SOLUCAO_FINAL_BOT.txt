@@ -1,0 +1,56 @@
+================================================================================
+  SOLUÇÃO FINAL - ERRO Cannot GET /
+================================================================================
+
+PROBLEMA:
+---------
+O bot está respondendo na porta 8000 (porta do Fly.io) em vez de 3001.
+O Django não está iniciando porque o bot está ocupando a porta.
+
+CAUSA:
+------
+A variável PORT do Fly.io (8000) estava sendo usada pelo bot.
+
+CORREÇÕES APLICADAS:
+--------------------
+✅ Bot configurado para sempre usar BOT_PORT=3001
+✅ Script atualizado para não usar PORT no bot
+✅ Django garantido na porta 8000
+
+================================================================================
+  FAZER DEPLOY DA CORREÇÃO
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  VERIFICAR APÓS DEPLOY
+================================================================================
+
+1. Aguarde 2-3 minutos
+2. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev
+3. Deve carregar o Django normalmente
+
+Verificar logs:
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "Bot API rodando na porta 3001" ✅
+- "Starting gunicorn" ✅
+- "Listening at: http://0.0.0.0:8000" ✅
+
+Se ainda aparecer "Cannot GET /", o problema persiste.
+
+================================================================================
+  TESTAR BOT
+================================================================================
+
+Após o deploy funcionar:
+1. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/dashboard/whatsapp-bot/
+2. Clique em "Iniciar Bot"
+3. O QR Code deve aparecer
+
+================================================================================
+

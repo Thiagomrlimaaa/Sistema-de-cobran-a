@@ -1,0 +1,98 @@
+================================================================================
+  APLICAR MIGRATIONS E CRIAR USUÁRIOS
+================================================================================
+
+✅ MÁQUINA CRIADA COM VOLUME
+----------------------------
+Máquina 4d8946dec06778 criada com volume vol_vl6k7o95zeo21m8v anexado!
+
+================================================================================
+  PASSO 1: AGUARDAR MÁQUINA INICIAR
+================================================================================
+
+Aguarde alguns segundos para a máquina iniciar completamente.
+
+Depois execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine list -a chatbot-cobrana-silent-feather-3785
+
+A máquina deve estar com STATE = "started".
+
+================================================================================
+  PASSO 2: CONECTAR VIA SSH
+================================================================================
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  PASSO 3: VERIFICAR VOLUME E APLICAR MIGRATIONS
+================================================================================
+
+Dentro do SSH:
+
+# Verificar se volume está montado
+ls -la /data
+
+# Deve mostrar o diretório /data (onde o banco será salvo)
+
+# Aplicar migrations
+python manage.py migrate --noinput
+
+# Isso criará todas as tabelas no banco SQLite em /data/db.sqlite3
+
+================================================================================
+  PASSO 4: CRIAR USUÁRIOS
+================================================================================
+
+Ainda dentro do SSH:
+
+python manage.py shell
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+# Criar jeff
+if not User.objects.filter(username='jeff').exists():
+    User.objects.create_user('jeff', password='1')
+    print('✅ Usuário jeff criado')
+else:
+    user = User.objects.get(username='jeff')
+    user.set_password('1')
+    user.save()
+    print('✅ Senha do jeff atualizada')
+
+# Criar thiago
+if not User.objects.filter(username='thiago').exists():
+    User.objects.create_user('thiago', password='1')
+    print('✅ Usuário thiago criado')
+else:
+    user = User.objects.get(username='thiago')
+    user.set_password('1')
+    user.save()
+    print('✅ Senha do thiago atualizada')
+
+exit()
+exit
+
+================================================================================
+  PASSO 5: TESTAR LOGIN
+================================================================================
+
+Após criar os usuários, teste:
+
+https://chatbot-cobrana-silent-feather-3785.fly.dev/accounts/login/
+
+Usuários:
+- jeff / 1
+- thiago / 1
+
+================================================================================
+  CONFIGURAÇÃO FINAL
+================================================================================
+
+✅ Volume persistente: /data/db.sqlite3
+✅ Máquina sempre rodando (min_machines_running = 1)
+✅ Dados persistem permanentemente
+✅ Não perderá dados quando reiniciar
+
+================================================================================

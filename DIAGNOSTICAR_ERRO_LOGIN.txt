@@ -1,0 +1,61 @@
+================================================================================
+  DIAGNOSTICAR ERRO NO LOGIN
+================================================================================
+
+Para identificar o erro específico, execute:
+
+1. VER LOGS EM TEMPO REAL:
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+2. TENTAR FAZER LOGIN enquanto os logs estão rodando
+3. Ver qual erro aparece nos logs
+
+================================================================================
+  POSSÍVEIS CAUSAS
+================================================================================
+
+1. ERRO DE TEMPLATE
+   - Template dashboard/home.html não encontrado
+   - Erro de sintaxe no template
+
+2. ERRO DE BANCO DE DADOS
+   - Migrations não aplicadas
+   - Tabelas não criadas
+
+3. ERRO DE IMPORTAÇÃO
+   - Módulo não encontrado
+   - Erro de import
+
+4. ERRO DE PERMISSÃO
+   - Usuário sem permissões
+   - Problema com sessão
+
+================================================================================
+  VERIFICAR VIA SSH
+================================================================================
+
+Conectar via SSH e verificar:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+- python manage.py check
+- python manage.py migrate
+- python manage.py showmigrations
+
+================================================================================
+  VERIFICAR SE USUÁRIO EXISTE
+================================================================================
+
+Se o erro for de autenticação:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+- python manage.py shell
+- from django.contrib.auth import get_user_model
+- User = get_user_model()
+- User.objects.all()
+
+================================================================================
+

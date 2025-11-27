@@ -1,0 +1,78 @@
+================================================================================
+  SOLUÇÃO - BOT WHATSAPP NO FLY.IO
+================================================================================
+
+PROBLEMA:
+---------
+O bot Node.js não está rodando no Fly.io.
+O Django está tentando conectar, mas não há servidor Node.js rodando.
+
+SOLUÇÃO APLICADA:
+-----------------
+✅ Script criado para iniciar Django e Bot juntos
+✅ Dockerfile atualizado para incluir Node.js
+✅ fly.toml configurado para usar o script
+
+================================================================================
+  CONFIGURAÇÕES NECESSÁRIAS
+================================================================================
+
+1. CONFIGURAR VARIÁVEIS DE AMBIENTE
+-----------------------------------
+Execute estes comandos:
+
+# URL do Django (para o bot se conectar)
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set DJANGO_API_URL="https://chatbot-cobrana-silent-feather-3785.fly.dev/api" -a chatbot-cobrana-silent-feather-3785
+
+# URL do bot (para o Django se conectar - usar localhost já que estão na mesma máquina)
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set WPPCONNECT_BOT_URL="http://localhost:3001" -a chatbot-cobrana-silent-feather-3785
+
+# Configurações do bot
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set WHATSAPP_SESSION="cobranca" -a chatbot-cobrana-silent-feather-3785
+"%USERPROFILE%\.fly\bin\flyctl.exe" secrets set BOT_PORT="3001" -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+Isso vai:
+1. Instalar Node.js no container
+2. Instalar dependências do bot (npm install)
+3. Iniciar bot e Django juntos
+
+================================================================================
+  VERIFICAR SE FUNCIONOU
+================================================================================
+
+Após o deploy:
+1. Aguarde alguns minutos
+2. Acesse: https://chatbot-cobrana-silent-feather-3785.fly.dev/dashboard/whatsapp-bot/
+3. Clique em "Iniciar Bot"
+4. O QR Code deve aparecer
+
+Verificar logs:
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "Bot API rodando na porta 3001"
+- "Iniciando bot automaticamente..."
+
+================================================================================
+  SE NÃO FUNCIONAR
+================================================================================
+
+1. Verificar se Node.js foi instalado:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "node --version"
+
+2. Verificar se dependências foram instaladas:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "ls -la /code/cobranca-bot/node_modules"
+
+3. Verificar se bot está rodando:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785 -C "ps aux | grep node"
+
+================================================================================
+

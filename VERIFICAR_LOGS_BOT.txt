@@ -1,0 +1,99 @@
+================================================================================
+  VERIFICAR LOGS DO BOT PARA DIAGNOSTICAR PROBLEMA
+================================================================================
+
+PROBLEMA:
+---------
+QR Code não está sendo gerado. Bot fica em estado "connecting" indefinidamente.
+
+POSSÍVEIS CAUSAS:
+-----------------
+1. Chromium não está sendo encontrado
+2. WPPConnect não consegue iniciar o navegador
+3. Erro silencioso que não está sendo logado
+4. Timeout na inicialização
+
+================================================================================
+  PASSO 1: VERIFICAR LOGS DO BOT
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" logs -a chatbot-cobrana-silent-feather-3785
+
+Procure por:
+- "✅ Chromium encontrado em: /usr/bin/chromium"
+- "🔧 Iniciando WPPConnect..."
+- "❌ Erro ao inicializar WhatsApp"
+- "QR Code gerado!"
+- Qualquer mensagem de erro relacionada a Chrome/Chromium/Puppeteer
+
+================================================================================
+  PASSO 2: VERIFICAR SE CHROMIUM ESTÁ INSTALADO
+================================================================================
+
+Conecte via SSH:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+
+# Verificar se Chromium existe
+which chromium
+ls -la /usr/bin/chromium
+
+# Verificar versão
+chromium --version
+
+# Verificar variáveis de ambiente
+echo $PUPPETEER_EXECUTABLE_PATH
+echo $CHROMIUM_PATH
+
+================================================================================
+  PASSO 3: VERIFICAR LOGS DO BOT DIRETAMENTE
+================================================================================
+
+Dentro do SSH:
+
+# Ver logs do bot
+cat /tmp/bot.log
+
+# Ou ver em tempo real
+tail -f /tmp/bot.log
+
+Procure por:
+- Erros relacionados a Chrome/Chromium
+- Erros do Puppeteer
+- Erros do WPPConnect
+- Mensagens sobre QR Code
+
+================================================================================
+  PASSO 4: TESTAR CHROMIUM MANUALMENTE
+================================================================================
+
+Dentro do SSH:
+
+# Testar se Chromium funciona
+chromium --headless --disable-gpu --dump-dom https://www.google.com
+
+Se der erro, o Chromium não está funcionando corretamente.
+
+================================================================================
+  CORREÇÕES APLICADAS
+================================================================================
+
+✅ Logs de debug adicionados
+✅ Tratamento de erros melhorado
+✅ Timeout aumentado para 60 segundos
+✅ Args adicionais do Chromium configurados
+
+================================================================================
+  PRÓXIMO PASSO
+================================================================================
+
+1. Verificar logs para identificar o erro específico
+2. Se Chromium não estiver instalado, fazer deploy novamente
+3. Se houver erro específico, corrigir baseado no erro
+
+================================================================================
+

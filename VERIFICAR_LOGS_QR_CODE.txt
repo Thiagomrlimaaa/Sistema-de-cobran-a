@@ -1,0 +1,96 @@
+================================================================================
+  VERIFICAR LOGS DO BOT PARA DIAGNOSTICAR QR CODE
+================================================================================
+
+PROBLEMA:
+---------
+QR Code não está sendo gerado. Bot fica em estado "connecting" indefinidamente.
+
+PRÓXIMOS PASSOS:
+----------------
+1. Verificar logs do bot para identificar o erro
+2. Verificar se Chromium está funcionando
+3. Adicionar mais tratamento de erros
+
+================================================================================
+  COMANDO 1: VER LOGS DO BOT
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+
+# Ver logs do bot
+cat /tmp/bot.log
+
+# Ou ver em tempo real
+tail -f /tmp/bot.log
+
+Procure por:
+- "✅ Chromium encontrado"
+- "🔧 Iniciando WPPConnect"
+- "✅ QR Code gerado"
+- "❌ Erro"
+- "Checking is logged"
+- "já está em execução"
+
+================================================================================
+  COMANDO 2: TESTAR BOT MANUALMENTE
+================================================================================
+
+Dentro do SSH:
+
+# Parar bot se estiver travado
+curl -X POST http://localhost:3001/stop
+
+# Aguardar 5 segundos
+sleep 5
+
+# Iniciar bot novamente
+curl -X POST http://localhost:3001/start
+
+# Aguardar 30 segundos
+sleep 30
+
+# Ver status
+curl http://localhost:3001/status
+
+# Ver QR Code
+curl http://localhost:3001/qr
+
+================================================================================
+  COMANDO 3: VERIFICAR PROCESSOS
+================================================================================
+
+Dentro do SSH:
+
+# Ver processos do Node.js
+ps aux | grep node
+
+# Ver processos do Chromium
+ps aux | grep chromium
+
+# Ver processos do Puppeteer
+ps aux | grep puppeteer
+
+# Matar processos travados
+pkill -f chromium || true
+pkill -f chrome || true
+
+================================================================================
+  COMANDO 4: VERIFICAR CHROMIUM
+================================================================================
+
+Dentro do SSH:
+
+which chromium
+chromium --version
+ls -la /usr/bin/chromium
+
+# Testar Chromium manualmente
+chromium --headless --disable-gpu --dump-dom https://www.google.com
+
+================================================================================
+

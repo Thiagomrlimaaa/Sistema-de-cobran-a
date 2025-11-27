@@ -1,0 +1,57 @@
+================================================================================
+  COMANDOS ÚTEIS - FLY.IO
+================================================================================
+
+VER STATUS DO APP
+-----------------
+fly status
+
+INICIAR MÁQUINA (se estiver parada)
+------------------------------------
+fly machine start
+
+OU
+fly apps open
+
+VER LOGS
+--------
+fly logs
+
+CRIAR SUPERUSUÁRIO (via SSH)
+-----------------------------
+fly ssh console -C "python manage.py createsuperuser"
+
+OU se conseguir conectar:
+fly ssh console
+python manage.py createsuperuser
+exit
+
+CONFIGURAR SECRETS
+------------------
+fly secrets set DJANGO_SECRET_KEY="sua-chave-secreta"
+fly secrets set DJANGO_DEBUG="False"
+fly secrets set DJANGO_ALLOWED_HOSTS="chatbot-cobrana-silent-feather-3785.fly.dev"
+
+VER SECRETS
+-----------
+fly secrets list
+
+ABRIR APP NO NAVEGADOR
+----------------------
+fly apps open
+
+================================================================================
+  SE DER ERRO SSH
+================================================================================
+
+1. Verifique se a máquina está rodando:
+   fly status
+
+2. Se estiver parada, inicie:
+   fly machine start
+
+3. Aguarde alguns segundos e tente novamente:
+   fly ssh console
+
+================================================================================
+

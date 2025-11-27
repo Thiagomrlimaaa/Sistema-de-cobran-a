@@ -1,0 +1,55 @@
+================================================================================
+  SOLUÇÃO: VOLUME PERSISTENTE PARA SQLITE
+================================================================================
+
+PROBLEMA:
+---------
+O volume foi criado, mas o deploy falha porque precisa estar na mesma zona
+que a máquina. O Fly.io anexa automaticamente em novas máquinas.
+
+SOLUÇÃO TEMPORÁRIA APLICADA:
+----------------------------
+✅ Removido mount do fly.toml temporariamente
+✅ Código preparado para usar /data quando disponível
+✅ Fazer deploy primeiro, depois reconfigurar volume
+
+================================================================================
+  ESTRATÉGIA
+================================================================================
+
+OPÇÃO 1: USAR VOLUME (RECOMENDADO)
+----------------------------------
+1. Fazer deploy sem volume primeiro (já feito)
+2. Parar máquinas antigas
+3. Adicionar mount no fly.toml
+4. Fazer deploy novamente (criará nova máquina com volume)
+
+OPÇÃO 2: USAR POSTGRESQL (MELHOR PARA PRODUÇÃO)
+-----------------------------------------------
+PostgreSQL é mais confiável que SQLite para produção:
+
+1. Criar PostgreSQL:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" postgres create --name chatbot-db
+
+2. Obter URL:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" postgres connect -a chatbot-db
+
+3. Configurar:
+   "%USERPROFILE%\.fly\bin\flyctl.exe" secrets set DATABASE_URL="postgres://..." -a chatbot-cobrana-silent-feather-3785
+
+4. Fazer deploy
+
+================================================================================
+  POR ENQUANTO: FAZER DEPLOY SEM VOLUME
+================================================================================
+
+O deploy deve funcionar agora sem o mount. Depois podemos configurar o volume.
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+Depois aplicar migrations e criar usuários.
+
+================================================================================
+

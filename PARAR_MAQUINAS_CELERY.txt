@@ -1,0 +1,61 @@
+================================================================================
+  SOLUÇÃO - PARAR MÁQUINAS CELERY PROBLEMÁTICAS
+================================================================================
+
+PROBLEMA:
+---------
+O Fly.io ainda está tentando executar Celery com configuração antiga.
+As máquinas 3d8d1374a00e08 e 3287e355a37d78 estão reiniciando infinitamente.
+
+SOLUÇÃO:
+--------
+1. Parar as máquinas problemáticas
+2. Fazer novo deploy com fly.toml corrigido
+
+================================================================================
+  COMANDOS PARA EXECUTAR
+================================================================================
+
+# 1. Parar a máquina problemática do Celery
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine stop 3d8d1374a00e08
+
+# 2. Parar a outra máquina do Celery
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine stop 3287e355a37d78
+
+# 3. Remover as máquinas (opcional, mas recomendado)
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine remove 3d8d1374a00e08 --force
+"%USERPROFILE%\.fly\bin\flyctl.exe" machine remove 3287e355a37d78 --force
+
+# 4. Verificar se o fly.toml está correto (Celery comentado)
+# Deve ter: # celery = 'celery -A cobranca_chatbot.celery worker --loglevel=INFO'
+
+# 5. Fazer deploy novamente
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy
+
+================================================================================
+  OU VIA WEBSITE (MAIS FÁCIL)
+================================================================================
+
+1. Acesse: https://fly.io/apps/chatbot-cobrana-silent-feather-3785
+2. Vá em "Machines" (máquinas)
+3. Para cada máquina problemática (3d8d1374a00e08, 3287e355a37d78):
+   - Clique nos 3 pontos (...)
+   - Selecione "Stop"
+   - Depois selecione "Remove" (remover)
+4. Vá em "Deployments" > "Deploy latest image" para fazer novo deploy
+
+================================================================================
+  VERIFICAR FLY.TOML
+================================================================================
+
+O fly.toml deve ter o Celery COMENTADO:
+
+[processes]
+  app = 'gunicorn --bind :8000 --workers 2 cobranca_chatbot.wsgi'
+  # Celery desabilitado temporariamente - requer Redis configurado
+  # celery = 'celery -A cobranca_chatbot.celery worker --loglevel=INFO'
+
+Se ainda tiver a linha sem comentário, corrija antes de fazer deploy!
+
+================================================================================
+

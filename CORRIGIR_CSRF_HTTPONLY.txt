@@ -1,0 +1,80 @@
+================================================================================
+  CORRIGIR ERRO 403 - CSRF HTTPONLY
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+----------------------
+CSRF_COOKIE_HTTPONLY = True impede JavaScript de ler o cookie csrftoken.
+Isso causa erro 403 ao tentar enviar mensagens via AJAX.
+
+CORREÇÕES APLICADAS:
+--------------------
+✅ CSRF_COOKIE_HTTPONLY = False (permite JavaScript ler o cookie)
+✅ Função getCookie() prioriza input hidden do Django
+✅ {% csrf_token %} adicionado no template para criar input hidden
+✅ credentials: 'same-origin' mantido para garantir envio de cookies
+
+================================================================================
+  O QUE FOI FEITO
+================================================================================
+
+1. SETTINGS.PY:
+--------------
+- CSRF_COOKIE_HTTPONLY alterado de True para False
+- Isso permite que JavaScript leia o cookie csrftoken
+- Mantém segurança (cookie ainda é enviado apenas via HTTPS em produção)
+
+2. TEMPLATE (bot_control.html):
+--------------------------------
+- {% csrf_token %} adicionado dentro do block content
+- Cria input hidden com token CSRF como fallback
+- Função getCookie() prioriza input hidden sobre cookie
+
+3. JAVASCRIPT:
+-------------
+- Função getCookie() melhorada para buscar token do input hidden primeiro
+- Fallback para cookie se input hidden não existir
+- Logs de debug para identificar problemas
+
+================================================================================
+  PRÓXIMO PASSO: FAZER DEPLOY
+================================================================================
+
+Execute:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  SEGURANÇA
+================================================================================
+
+⚠️ IMPORTANTE: CSRF_COOKIE_HTTPONLY = False permite JavaScript ler o cookie.
+
+Isso é necessário para requisições AJAX, mas:
+- O cookie ainda é enviado apenas via HTTPS em produção (CSRF_COOKIE_SECURE)
+- O token ainda é validado pelo Django
+- Apenas o mesmo domínio pode acessar o cookie (SameSite=Lax)
+
+A segurança ainda está mantida, apenas permite que JavaScript leia o token
+para enviar em requisições AJAX.
+
+================================================================================
+  SE AINDA DER ERRO 403
+================================================================================
+
+1. Verificar se input hidden existe:
+   - Abra DevTools (F12)
+   - Procure por: <input name="csrfmiddlewaretoken" ...>
+   - Se não existir, o {% csrf_token %} não está funcionando
+
+2. Verificar console:
+   - Veja se há mensagem "🔐 Token CSRF obtido:"
+   - Se não aparecer, o token não está sendo obtido
+
+3. Verificar cookies:
+   - DevTools → Application → Cookies
+   - Verifique se cookie 'csrftoken' existe
+   - Se não existir, faça login novamente
+
+================================================================================
+

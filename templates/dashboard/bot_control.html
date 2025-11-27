@@ -1,9 +1,14 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
 
+{% block extra_head %}
+{% csrf_token %}
+{% endblock %}
+
 {% block title %}Controle do Bot WhatsApp - Painel Administrativo{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="space-y-6">
     <!-- Status do Bot -->
     <section class="rounded-3xl bg-white/95 p-6 shadow-soft ring-1 ring-white/40 backdrop-blur">
@@ -589,18 +594,40 @@ async function sendBulkMessage(event) {
     resultDiv.classList.add('hidden');
 
     try {
+        // Obter token CSRF
+        const csrfToken = getCookie('csrftoken');
+        if (!csrfToken) {
+            console.error('❌ Token CSRF não encontrado! Recarregando página...');
+            alert('Sessão expirada. Recarregando página...');
+            window.location.reload();
+            return;
+        }
+        
+        console.log('🔐 Token CSRF obtido:', csrfToken.substring(0, 10) + '...');
+        
         const response = await fetch(`${API_BASE}/bot/send-bulk/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken'),
+                'X-CSRFToken': csrfToken,
             },
+            credentials: 'same-origin', // Importante para enviar cookies
             body: JSON.stringify({
                 client_ids: clientIds,
                 message: message,
             }),
         });
+        
         if (!response.ok) {
+            // Se for 403, pode ser CSRF - tentar recarregar página
+            if (response.status === 403) {
+                console.error('❌ Erro 403 (CSRF). Recarregando página...');
+                const errorData = await response.json().catch(() => ({ error: 'Erro de autenticação (403)' }));
+                alert('Sessão expirada ou token CSRF inválido. Recarregando página...');
+                window.location.reload();
+                return;
+            }
+            
             const errorData = await response.json().catch(() => ({ error: `Erro HTTP ${response.status}` }));
             throw new Error(errorData.error || `Erro HTTP ${response.status}`);
         }
@@ -781,6 +808,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Utilitários
 function getCookie(name) {
+    // Primeiro tentar pegar do input hidden do Django (mais confiável)
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfInput && csrfInput.value) {
+        return csrfInput.value;
+    }
+    
+    // Se não encontrou, tentar do cookie (pode não funcionar se HTTPONLY)
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');

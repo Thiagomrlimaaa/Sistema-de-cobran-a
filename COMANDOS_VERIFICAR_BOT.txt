@@ -1,0 +1,69 @@
+================================================================================
+  COMANDOS PARA VERIFICAR POR QUE QR CODE NÃO APARECE
+================================================================================
+
+Execute estes comandos para diagnosticar o problema:
+
+================================================================================
+  COMANDO 1: VER LOGS DO BOT
+================================================================================
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+
+Dentro do SSH:
+cat /tmp/bot.log
+
+Procure por:
+- "✅ Chromium encontrado"
+- "🔧 Iniciando WPPConnect"
+- "✅ QR Code gerado"
+- "❌ Erro"
+
+================================================================================
+  COMANDO 2: VERIFICAR CHROMIUM
+================================================================================
+
+Dentro do SSH:
+which chromium
+ls -la /usr/bin/chromium
+chromium --version
+
+Se não existir, o Chromium não foi instalado corretamente.
+
+================================================================================
+  COMANDO 3: TESTAR BOT MANUALMENTE
+================================================================================
+
+Dentro do SSH:
+curl http://localhost:3001/status
+curl -X POST http://localhost:3001/start
+sleep 10
+curl http://localhost:3001/qr
+
+================================================================================
+  COMANDO 4: VER PROCESSOS
+================================================================================
+
+Dentro do SSH:
+ps aux | grep -E "node|chromium|puppeteer"
+
+================================================================================
+  SE CHROMIUM NÃO ESTIVER INSTALADO
+================================================================================
+
+Fazer deploy novamente:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+================================================================================
+  CORREÇÕES APLICADAS
+================================================================================
+
+✅ Timeout aumentado para 120 segundos
+✅ Mais args do Chromium para melhor compatibilidade
+✅ Verificação se Chromium existe antes de iniciar
+✅ Logs mais detalhados
+✅ Protocol timeout configurado
+
+================================================================================
+

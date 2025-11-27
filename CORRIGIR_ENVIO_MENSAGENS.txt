@@ -1,0 +1,91 @@
+================================================================================
+  CORRIGIR ERRO 403 E CONTATO NÃO ENCONTRADO
+================================================================================
+
+PROBLEMAS IDENTIFICADOS:
+------------------------
+1. ❌ Erro HTTP 403 ao enviar mensagens (CSRF ou autenticação)
+2. ⚠️ Contato não encontrado na lista do WhatsApp (mas isso não impede envio)
+
+================================================================================
+  CORREÇÕES APLICADAS
+================================================================================
+
+✅ FUNÇÃO sendMessage MELHORADA:
+---------------------------------
+- Tentativa de reenvio se a primeira falhar
+- Logs mais detalhados
+- Melhor tratamento de erros
+
+IMPORTANTE:
+-----------
+O WhatsApp pode enviar mensagens para números NÃO SALVOS nos contatos!
+O aviso "Contato não encontrado" é apenas informativo - o envio deve funcionar.
+
+================================================================================
+  SOBRE O ERRO 403
+================================================================================
+
+O erro 403 pode ser causado por:
+1. Token CSRF inválido ou expirado
+2. Sessão expirada (precisa fazer login novamente)
+3. Permissões insuficientes
+
+SOLUÇÃO:
+--------
+1. Verificar se está logado
+2. Recarregar a página para obter novo token CSRF
+3. Tentar enviar novamente
+
+================================================================================
+  SOBRE CONTATO NÃO ENCONTRADO
+================================================================================
+
+O aviso "Contato não encontrado" é apenas informativo.
+
+O WhatsApp permite enviar mensagens para números não salvos, desde que:
+- O número esteja no formato correto (com código do país)
+- O número seja válido
+- O bot esteja conectado
+
+O número "6392052169" será formatado como "556392052169@c.us" e deve funcionar.
+
+================================================================================
+  PRÓXIMOS PASSOS
+================================================================================
+
+1. FAZER DEPLOY DAS CORREÇÕES:
+-------------------------------
+"%USERPROFILE%\.fly\bin\flyctl.exe" deploy -a chatbot-cobrana-silent-feather-3785
+
+2. TESTAR ENVIO:
+---------------
+- Recarregar a página do dashboard
+- Tentar enviar mensagem novamente
+- Verificar logs se ainda der erro
+
+3. VERIFICAR LOGS:
+------------------
+Se ainda der erro, verificar logs do bot:
+
+"%USERPROFILE%\.fly\bin\flyctl.exe" ssh console -a chatbot-cobrana-silent-feather-3785
+cat /tmp/bot.log
+
+Procure por:
+- "[ENVIO] Tentando enviar para:"
+- "[ENVIO] ✅ Sucesso"
+- "[ENVIO] ❌ Erro"
+
+================================================================================
+  NOTA IMPORTANTE
+================================================================================
+
+O WhatsApp pode bloquear temporariamente o envio de mensagens se:
+- Enviar muitas mensagens muito rápido
+- Enviar para números inválidos
+- Enviar spam
+
+O código já tem delay de 2 segundos entre mensagens para evitar bloqueios.
+
+================================================================================
+

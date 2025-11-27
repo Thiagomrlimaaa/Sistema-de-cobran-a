@@ -9,11 +9,12 @@ require('dotenv').config();
 function findChromium() {
   const fs = require('fs');
   const possiblePaths = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    process.env.CHROMIUM_PATH,
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    process.env.CHROMIUM_PATH
+    '/usr/bin/google-chrome-stable'
   ];
   
   for (const path of possiblePaths) {
@@ -29,12 +30,14 @@ if (chromiumPath) {
   console.log(`✅ Chromium encontrado em: ${chromiumPath}`);
 } else {
   console.log('⚠️ Chromium não encontrado no sistema, tentando usar Chrome do Puppeteer');
+  console.log('⚠️ Se o bot não funcionar, instale Chromium no sistema');
 }
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
 const SESSION_NAME = process.env.WHATSAPP_SESSION || 'cobranca';
-// Usar PORT do ambiente (Render/Railway) ou BOT_PORT, ou padrão 3001
-const BOT_PORT = process.env.PORT || process.env.BOT_PORT || 3001;
+// Usar BOT_PORT primeiro, depois PORT (se não for 8000), ou padrão 3001
+// IMPORTANTE: No Fly.io, PORT=8000 é para Django, então sempre usar BOT_PORT
+const BOT_PORT = process.env.BOT_PORT || (process.env.PORT && process.env.PORT !== '8000' ? process.env.PORT : null) || 3001;
 
 let whatsappClient = null;
 let qrCodeBase64 = null;
@@ -171,26 +174,116 @@ async function sendMessage(phone, message) {
     throw new Error('Cliente WhatsApp não está conectado');
   }
 
+  // Verificar se o cliente está realmente conectado
+  try {
+    const isConnected = await whatsappClient.isConnected();
+    if (!isConnected) {
+      throw new Error('Cliente WhatsApp não está conectado (isConnected retornou false)');
+    }
+    console.log(`[ENVIO] ✅ Cliente verificado como conectado`);
+  } catch (checkError) {
+    console.error(`[ENVIO] ❌ Erro ao verificar conexão:`, checkError.message);
+    throw new Error('Não foi possível verificar conexão do WhatsApp');
+  }
+
   try {
     const formattedPhone = formatPhone(phone);
-    console.log(`[ENVIO] Tentando enviar para: ${formattedPhone}`);
-    console.log(`[ENVIO] Mensagem: ${message.substring(0, 50)}...`);
+    console.log(`[ENVIO] Tentando enviar para: ${formattedPhone} (original: ${phone})`);
+    console.log(`[ENVIO] Mensagem (${message.length} caracteres): ${message.substring(0, 50)}...`);
+    console.log(`[ENVIO] whatsappClient existe: ${!!whatsappClient}`);
+    console.log(`[ENVIO] Tipo do whatsappClient: ${whatsappClient.constructor.name}`);
     
-    const result = await whatsappClient.sendText(formattedPhone, message);
-    console.log(`[ENVIO] ✅ Sucesso para ${formattedPhone}:`, result.id || 'enviado');
-    return result;
+    // Verificar se o método sendText existe
+    if (typeof whatsappClient.sendText !== 'function') {
+      throw new Error('Método sendText não está disponível no cliente WhatsApp');
+    }
+    
+    // Tentar enviar com timeout
+    const sendPromise = whatsappClient.sendText(formattedPhone, message);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout ao enviar mensagem (30s)')), 30000)
+    );
+    
+    try {
+      const result = await Promise.race([sendPromise, timeoutPromise]);
+      console.log(`[ENVIO] ✅ Sucesso para ${formattedPhone}`);
+      console.log(`[ENVIO] Resultado:`, JSON.stringify(result, null, 2));
+      return result;
+    } catch (sendError) {
+      // Se falhar, tentar novamente após um delay
+      console.error(`[ENVIO] ❌ Primeira tentativa falhou: ${sendError.message}`);
+      console.error(`[ENVIO] ❌ Stack:`, sendError.stack);
+      console.error(`[ENVIO] ❌ Tipo do erro:`, sendError.constructor.name);
+      
+      // Aguardar 2 segundos antes de tentar novamente
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      try {
+        console.log(`[ENVIO] 🔄 Tentando novamente após delay...`);
+        const result = await Promise.race([
+          whatsappClient.sendText(formattedPhone, message),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout na segunda tentativa (30s)')), 30000)
+          )
+        ]);
+        console.log(`[ENVIO] ✅ Sucesso na segunda tentativa para ${formattedPhone}`);
+        return result;
+      } catch (retryError) {
+        console.error(`[ENVIO] ❌ Erro persistente ao enviar para ${formattedPhone}:`, retryError.message);
+        console.error(`[ENVIO] ❌ Stack:`, retryError.stack);
+        throw retryError;
+      }
+    }
   } catch (error) {
-    console.error(`[ENVIO] ❌ Erro ao enviar para ${phone}:`, error.message);
-    console.error(`[ENVIO] Stack:`, error.stack);
+    console.error(`[ENVIO] ❌ Erro geral ao enviar para ${phone}:`, error.message);
+    console.error(`[ENVIO] ❌ Stack completo:`, error.stack);
+    console.error(`[ENVIO] ❌ Tipo do erro:`, error.constructor.name);
     throw error;
   }
 }
 
 // Função para inicializar conexão WhatsApp
-function initializeWhatsApp() {
+async function initializeWhatsApp() {
   if (whatsappClient) {
     console.log('Bot já está conectado');
     return Promise.resolve(whatsappClient);
+  }
+
+  // Limpar sessão antiga se existir (para evitar erro de navegador já em execução)
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const sessionPath = path.join(__dirname, 'tokens', SESSION_NAME);
+    
+    // Verificar se há processos do Chromium rodando para esta sessão
+    const { execSync } = require('child_process');
+    try {
+      console.log('🔧 Verificando processos do Chromium...');
+      // Tentar matar processos de forma mais suave
+      execSync('killall chromium chromium-browser chrome 2>/dev/null || true', { stdio: 'ignore' });
+      execSync('pkill -9 -f puppeteer 2>/dev/null || true', { stdio: 'ignore' });
+      console.log('✅ Processos antigos limpos');
+    } catch (killError) {
+      // Ignorar erros - pode não haver processos
+      console.log('⚠️ Processos já limpos ou não existem');
+    }
+    
+    // Limpar diretório de sessão antiga se existir (forçar novo QR Code)
+    try {
+      const browserDataPath = path.join(sessionPath, 'browser_data');
+      if (fs.existsSync(browserDataPath)) {
+        console.log('🔧 Limpando dados do navegador antigo...');
+        fs.rmSync(browserDataPath, { recursive: true, force: true });
+        console.log('✅ Dados do navegador limpos');
+      }
+    } catch (cleanupErr) {
+      console.log('⚠️ Erro ao limpar dados do navegador:', cleanupErr.message);
+    }
+    
+    // Aguardar um pouco para garantir que processos foram finalizados
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  } catch (cleanupError) {
+    console.log('⚠️ Erro ao limpar sessão antiga:', cleanupError.message);
   }
 
   connectionStatus = 'connecting';
@@ -198,9 +291,49 @@ function initializeWhatsApp() {
   botState.qrCode = null;
   botState.error = null;
 
+  // Log de debug
+  console.log('🔧 Iniciando WPPConnect...');
+  console.log('🔧 Chromium path:', chromiumPath || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || 'não definido');
+  console.log('🔧 Session name:', SESSION_NAME);
+  console.log('🔧 Verificando se Chromium existe...');
+  
+  // Verificar se Chromium existe antes de iniciar
+  const fs = require('fs');
+  const execPath = chromiumPath || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH;
+  if (execPath && !fs.existsSync(execPath)) {
+    console.error(`❌ Chromium não encontrado em: ${execPath}`);
+    console.error('❌ Tentando continuar sem caminho específico...');
+  } else if (execPath) {
+    console.log(`✅ Chromium encontrado em: ${execPath}`);
+  } else {
+    console.log('⚠️ Caminho do Chromium não definido, usando padrão do Puppeteer');
+  }
+  
+  // Usar userDataDir único para evitar conflitos
+  const path = require('path');
+  const userDataDir = path.join(__dirname, 'tokens', SESSION_NAME, 'browser_data');
+  
+  console.log('🔧 UserDataDir:', userDataDir);
+  
+  // Criar diretório se não existir
+  const fs = require('fs');
+  try {
+    if (!fs.existsSync(userDataDir)) {
+      fs.mkdirSync(userDataDir, { recursive: true });
+      console.log('✅ Diretório userDataDir criado');
+    }
+  } catch (dirError) {
+    console.log('⚠️ Erro ao criar diretório:', dirError.message);
+  }
+  
   return wppconnect
     .create({
       session: SESSION_NAME,
+      userDataDir: userDataDir, // Diretório único para dados do navegador
+      disableWelcome: true, // Desabilitar mensagem de boas-vindas
+      updatesLog: true, // Habilitar logs de atualizações
+      waitForLogin: false, // Não esperar login automático - forçar QR Code
+      autoClose: 60000, // Fechar automaticamente após 60 segundos se não conectar
       browserArgs: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -209,7 +342,28 @@ function initializeWhatsApp() {
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-breakpad',
+        '--disable-component-update',
+        '--disable-domain-reliability',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-sync',
+        '--metrics-recording-only',
+        '--mute-audio',
+        '--no-default-browser-check',
+        '--no-pings',
+        '--password-store=basic',
+        '--use-mock-keychain',
+        '--hide-scrollbars',
+        '--disable-logging',
+        '--disable-notifications'
       ],
       puppeteerOptions: {
         headless: true,
@@ -221,13 +375,45 @@ function initializeWhatsApp() {
           '--no-first-run',
           '--no-zygote',
           '--single-process',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--disable-extensions',
+          '--disable-background-networking',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-breakpad',
+          '--disable-component-update',
+          '--disable-domain-reliability',
+          '--disable-features=TranslateUI',
+          '--disable-ipc-flooding-protection',
+          '--disable-sync',
+          '--metrics-recording-only',
+          '--mute-audio',
+          '--no-default-browser-check',
+          '--no-pings',
+          '--password-store=basic',
+          '--use-mock-keychain',
+          '--hide-scrollbars',
+          '--disable-logging',
+          '--disable-notifications'
         ],
-        executablePath: chromiumPath || process.env.CHROMIUM_PATH || undefined
+        executablePath: chromiumPath || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || undefined,
+        ignoreDefaultArgs: ['--disable-extensions'],
+        timeout: 180000, // Aumentar timeout para 3 minutos
+        protocolTimeout: 300000 // Aumentar protocolTimeout para 5 minutos (para operações pesadas como getAllContacts)
       },
-      catchQR: (base64Qr, asciiQR) => {
-        console.log('QR Code gerado!');
-        console.log('QR Code base64 disponível:', base64Qr ? 'Sim' : 'Não');
+      catchQR: (base64Qr, asciiQR, attempts, urlCode) => {
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('✅ QR CODE GERADO!');
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('✅ Tentativa:', attempts || 'N/A');
+        console.log('✅ QR Code base64 disponível:', base64Qr ? 'Sim' : 'Não');
+        console.log('✅ QR Code ASCII disponível:', asciiQR ? 'Sim' : 'Não');
+        console.log('✅ URL Code:', urlCode || 'N/A');
+        if (base64Qr) {
+          console.log('✅ Tamanho do QR Code:', base64Qr.length, 'caracteres');
+        }
         
         // Limpar QR Code (remover prefixo se existir)
         const cleanBase64 = cleanQRCode(base64Qr);
@@ -238,17 +424,25 @@ function initializeWhatsApp() {
         botState.status = 'waiting_qr';
         connectionStatus = 'waiting_qr';
         
-        console.log('Estado atualizado: waiting_qr');
+        console.log('✅ Estado atualizado: waiting_qr');
         console.log('📱 QR Code disponível na API: GET http://localhost:' + BOT_PORT + '/qr');
         console.log('📱 QR Code também disponível em: GET http://localhost:' + BOT_PORT + '/status');
         
         // Forçar atualização imediata do estado
         if (cleanBase64) {
           console.log('✅ QR Code base64 capturado com sucesso! (tamanho: ' + cleanBase64.length + ' caracteres)');
+        } else {
+          console.error('❌ QR Code base64 está vazio!');
+          console.error('❌ Tentando usar ASCII QR Code...');
+          if (asciiQR) {
+            console.log('⚠️ Usando ASCII QR Code como fallback');
+          }
         }
       },
       statusFind: (statusSession, session) => {
-        console.log('Status da sessão:', statusSession);
+        console.log('📊 Status da sessão:', statusSession);
+        console.log('📊 Session object:', session ? 'existe' : 'não existe');
+        
         if (statusSession === 'isLogged') {
           connectionStatus = 'connected';
           botState.status = 'connected';
@@ -267,6 +461,13 @@ function initializeWhatsApp() {
           botState.status = 'disconnected';
           botState.qrCode = null;
           console.log('⚠️ Sessão desconectada');
+        } else if (statusSession === 'browserClose' || statusSession === 'qrReadError') {
+          connectionStatus = 'error';
+          botState.status = 'error';
+          botState.error = `Erro na sessão: ${statusSession}`;
+          console.error('❌ Erro na sessão:', statusSession);
+        } else {
+          console.log('ℹ️ Status desconhecido:', statusSession);
         }
       },
     })
@@ -275,7 +476,7 @@ function initializeWhatsApp() {
       connectionStatus = 'connected';
       botState.status = 'connected';
       botState.connectedAt = new Date().toISOString();
-      console.log('Bot iniciado e pronto para receber mensagens!');
+      console.log('✅ Bot iniciado e pronto para receber mensagens!');
 
       // Escutar mensagens recebidas
       client.onMessage(async (message) => {
@@ -310,27 +511,81 @@ function initializeWhatsApp() {
 
       return client;
     })
-    .catch((err) => {
-      console.error('Erro ao inicializar WhatsApp:', err);
+    .catch(async (err) => {
+      console.error('❌ Erro ao inicializar WhatsApp:', err);
+      console.error('❌ Stack trace:', err.stack);
+      console.error('❌ Tipo do erro:', err.constructor.name);
+      console.error('❌ Mensagem completa:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+      
+      // Se o erro for sobre navegador já em execução, tentar limpar
+      if (err.message && (err.message.includes('já está em execução') || err.message.includes('already running'))) {
+        console.log('🔧 Detectado erro de navegador já em execução. Limpando...');
+        try {
+          await disconnect();
+          console.log('✅ Sessão antiga limpa. Tente iniciar novamente.');
+        } catch (cleanupErr) {
+          console.error('❌ Erro ao limpar sessão:', cleanupErr.message);
+        }
+      }
+      
       connectionStatus = 'error';
       botState.status = 'error';
-      botState.error = err.message;
+      botState.error = err.message || 'Erro desconhecido ao inicializar WhatsApp';
       whatsappClient = null;
-      throw err;
+      
+      // Não fazer throw para evitar crash - apenas logar o erro
+      console.error('❌ Bot não pôde ser inicializado. Tente parar e iniciar novamente.');
     });
 }
 
 // Função para desconectar
-function disconnect() {
+async function disconnect() {
   if (whatsappClient) {
-    whatsappClient.logout();
+    try {
+      // Tentar fechar graciosamente primeiro
+      try {
+        await whatsappClient.logout();
+        console.log('✅ Logout realizado');
+      } catch (logoutErr) {
+        console.log('⚠️ Erro no logout (pode já estar desconectado):', logoutErr.message);
+      }
+      
+      // Fechar cliente
+      try {
+        await whatsappClient.close();
+        console.log('✅ Cliente WhatsApp fechado');
+      } catch (closeErr) {
+        console.log('⚠️ Erro ao fechar cliente (pode já estar fechado):', closeErr.message);
+      }
+    } catch (err) {
+      console.error('❌ Erro ao fechar cliente:', err.message);
+    }
     whatsappClient = null;
   }
+
+  // Matar processos do Chromium/Puppeteer que possam estar travados
+  try {
+    const { execSync } = require('child_process');
+    console.log('🔧 Limpando processos do Chromium...');
+    try {
+      // Tentar matar processos de forma mais suave
+      execSync('killall chromium chromium-browser chrome 2>/dev/null || true', { stdio: 'ignore' });
+      execSync('pkill -9 -f puppeteer 2>/dev/null || true', { stdio: 'ignore' });
+      console.log('✅ Processos do Chromium limpos');
+    } catch (killError) {
+      // Ignorar erros - pode não haver processos para matar
+      console.log('⚠️ Processos já limpos ou não existem');
+    }
+  } catch (err) {
+    console.log('⚠️ Erro ao limpar processos:', err.message);
+  }
+
   connectionStatus = 'disconnected';
   botState.status = 'disconnected';
   botState.qrCode = null;
   botState.connectedAt = null;
-  console.log('Bot desconectado');
+
+  console.log('✅ Bot desconectado');
 }
 
 // ========== ENDPOINTS DA API ==========
@@ -377,9 +632,11 @@ app.post('/start', async (req, res) => {
 
     // Iniciar bot
     initializeWhatsApp().catch((err) => {
-      console.error('Erro ao iniciar bot:', err);
+      console.error('❌ Erro ao iniciar bot:', err);
+      console.error('❌ Stack trace:', err.stack);
       botState.status = 'error';
-      botState.error = err.message;
+      botState.error = err.message || 'Erro desconhecido ao iniciar bot';
+      connectionStatus = 'error';
     });
 
     // Aguardar um pouco para o QR Code ser gerado
@@ -401,9 +658,9 @@ app.post('/start', async (req, res) => {
 });
 
 // Parar bot
-app.post('/stop', (req, res) => {
+app.post('/stop', async (req, res) => {
   try {
-    disconnect();
+    await disconnect();
     res.json({
       success: true,
       message: 'Bot desconectado com sucesso',
@@ -531,7 +788,13 @@ app.post('/add-contact', async (req, res) => {
     let whatsappName = name || '';
     
     try {
-      const allContacts = await whatsappClient.getAllContacts();
+      // Adicionar timeout para getAllContacts (pode demorar muito)
+      const allContacts = await Promise.race([
+        whatsappClient.getAllContacts(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout ao buscar contatos (30s)')), 30000)
+        )
+      ]);
       if (Array.isArray(allContacts) && allContacts.length > 0) {
         // Criar mapa para busca rápida
         const contactsMap = new Map();
@@ -595,6 +858,10 @@ app.post('/add-contact', async (req, res) => {
       }
     } catch (contactsError) {
       console.log(`[CONTACT] ⚠️ Erro ao buscar contatos: ${contactsError.message}`);
+      // Não é crítico - continuar mesmo sem contatos
+      if (contactsError.message.includes('timeout') || contactsError.message.includes('Timeout')) {
+        console.log(`[CONTACT] ⚠️ Timeout ao buscar contatos - continuando sem verificação`);
+      }
     }
     
     return res.json({
@@ -642,7 +909,13 @@ app.post('/sync-contacts', async (req, res) => {
   let contactsMap = new Map(); // Mapa para busca rápida por número
   
   try {
-    whatsappContacts = await whatsappClient.getAllContacts();
+    // Adicionar timeout para getAllContacts (pode demorar muito)
+    whatsappContacts = await Promise.race([
+      whatsappClient.getAllContacts(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout ao buscar contatos (30s)')), 30000)
+      )
+    ]);
     console.log(`[SYNC] 📱 Encontrados ${whatsappContacts.length} contatos no WhatsApp`);
     
     // Criar mapa de contatos para busca rápida
@@ -729,7 +1002,13 @@ app.post('/sync-contacts', async (req, res) => {
     }
   } catch (error) {
     console.log(`[SYNC] ⚠️ Não foi possível buscar contatos do WhatsApp: ${error.message}`);
-    console.log(`[SYNC] 🔍 Stack:`, error.stack);
+    if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+      console.log(`[SYNC] ⚠️ Timeout ao buscar contatos - continuando sem sincronização`);
+      console.log(`[SYNC] ⚠️ Envio de mensagens não será afetado - sincronização é opcional`);
+    } else {
+      console.log(`[SYNC] 🔍 Stack:`, error.stack);
+    }
+    // Continuar mesmo se falhar - sincronização não é crítica
   }
 
   for (const contact of contacts) {
@@ -844,10 +1123,24 @@ app.post('/send-bulk', async (req, res) => {
     const client = clients[i];
     try {
       const phone = typeof client === 'string' ? client : client.phone;
-      console.log(`[BULK] [${i + 1}/${clients.length}] Enviando para: ${phone}`);
+      const formattedPhone = formatPhone(phone);
+      console.log(`[BULK] [${i + 1}/${clients.length}] Enviando para: ${formattedPhone} (original: ${phone})`);
+      
+      // Verificar se cliente está conectado antes de cada envio
+      try {
+        const isConnected = await whatsappClient.isConnected();
+        if (!isConnected) {
+          throw new Error('Cliente WhatsApp desconectado durante envio');
+        }
+      } catch (checkError) {
+        console.error(`[BULK] [${i + 1}/${clients.length}] ❌ Cliente desconectado:`, checkError.message);
+        errors.push({ phone, error: 'Cliente WhatsApp desconectado' });
+        continue;
+      }
       
       const result = await sendMessage(phone, message);
-      results.push({ phone, success: true, result });
+      console.log(`[BULK] [${i + 1}/${clients.length}] ✅ Sucesso para ${formattedPhone}`);
+      results.push({ phone: formattedPhone, success: true, result });
       
       // Pequeno delay para evitar rate limit (2 segundos entre mensagens)
       if (i < clients.length - 1) {
@@ -855,8 +1148,10 @@ app.post('/send-bulk', async (req, res) => {
       }
     } catch (error) {
       const phone = typeof client === 'string' ? client : client.phone;
-      console.error(`[BULK] [${i + 1}/${clients.length}] ❌ Erro para ${phone}:`, error.message);
-      errors.push({ phone, error: error.message });
+      const formattedPhone = formatPhone(phone);
+      console.error(`[BULK] [${i + 1}/${clients.length}] ❌ Erro para ${formattedPhone}:`, error.message);
+      console.error(`[BULK] [${i + 1}/${clients.length}] ❌ Stack:`, error.stack);
+      errors.push({ phone: formattedPhone, error: error.message });
     }
   }
 
@@ -872,9 +1167,11 @@ app.post('/send-bulk', async (req, res) => {
 });
 
 // Iniciar servidor
-app.listen(BOT_PORT, () => {
-  console.log(`Bot API rodando na porta ${BOT_PORT}`);
-  console.log(`Endpoints disponíveis:`);
+// Iniciar servidor Express
+const server = app.listen(BOT_PORT, '0.0.0.0', () => {
+  console.log(`✅ Bot API rodando na porta ${BOT_PORT}`);
+  console.log(`✅ Escutando em 0.0.0.0:${BOT_PORT} (acessível de qualquer interface)`);
+  console.log(`📋 Endpoints disponíveis:`);
   console.log(`  GET  /status - Status do bot`);
   console.log(`  POST /start - Iniciar bot`);
   console.log(`  POST /stop - Parar bot`);
@@ -882,14 +1179,55 @@ app.listen(BOT_PORT, () => {
   console.log(`  POST /send - Enviar mensagem`);
   console.log(`  POST /send-bulk - Enviar mensagem em massa`);
   console.log('');
+  
+  // Verificar se o servidor está realmente escutando
+  const address = server.address();
+  if (address) {
+    console.log(`✅ Servidor confirmado escutando em ${address.address}:${address.port}`);
+  } else {
+    console.error(`❌ ERRO: Servidor não está escutando!`);
+  }
+  console.log('🔧 Variáveis de ambiente:');
+  console.log(`  BOT_PORT: ${BOT_PORT}`);
+  console.log(`  DJANGO_API_URL: ${DJANGO_API_URL}`);
+  console.log(`  SESSION_NAME: ${SESSION_NAME}`);
+  console.log(`  PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'não definido'}`);
+  console.log(`  CHROMIUM_PATH: ${process.env.CHROMIUM_PATH || 'não definido'}`);
+  console.log(`  Chromium encontrado: ${chromiumPath || 'não encontrado'}`);
+  console.log('');
   console.log('🚀 Iniciando bot automaticamente...');
   
   // Iniciar bot automaticamente quando o servidor iniciar
-  initializeWhatsApp().catch((err) => {
-    console.error('Erro ao inicializar bot automaticamente:', err);
-    botState.status = 'error';
-    botState.error = err.message;
-  });
+  // Aguardar mais tempo para garantir que tudo está pronto
+  setTimeout(() => {
+    console.log('⏳ Aguardando 5 segundos antes de iniciar WPPConnect...');
+    console.log('⏳ Isso garante que todas as dependências estão carregadas');
+    
+    initializeWhatsApp().catch((err) => {
+      console.error('❌ Erro ao inicializar bot automaticamente:', err);
+      console.error('❌ Stack trace:', err.stack);
+      console.error('❌ Tipo do erro:', err.constructor.name);
+      botState.status = 'error';
+      botState.error = err.message || 'Erro desconhecido ao inicializar bot';
+      connectionStatus = 'error';
+      console.error('❌ Bot não iniciou automaticamente. Use POST /start para tentar novamente.');
+    });
+  }, 5000);
+});
+
+// Tratamento de erros do servidor
+server.on('error', (err) => {
+  console.error('❌ Erro no servidor Express:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Porta ${BOT_PORT} já está em uso!`);
+    console.error(`❌ Tente usar uma porta diferente ou encerre o processo que está usando a porta ${BOT_PORT}`);
+  }
+  process.exit(1);
+});
+
+// Tratamento de desconexão
+server.on('close', () => {
+  console.log('⚠️ Servidor Express foi fechado');
 });
 
 // Exportar funções
