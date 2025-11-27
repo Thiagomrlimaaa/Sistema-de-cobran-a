@@ -31,14 +31,20 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app
 
-# Copia arquivos do bot
+# Copia package.json e package-lock.json
 COPY cobranca-bot/package*.json ./
+
+# Instala dependências
 RUN npm install
 
-# Copia resto dos arquivos do bot
+# Copia todos os arquivos do bot para /app
+COPY cobranca-bot/index.js ./
 COPY cobranca-bot/ ./
 
 EXPOSE 3001
+
+# Usar PORT do Koyeb ou 3001 como padrão
+ENV PORT=3001
 
 CMD ["node", "index.js"]
 

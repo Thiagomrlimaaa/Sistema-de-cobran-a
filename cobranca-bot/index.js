@@ -123,9 +123,9 @@ if (!process.env.PUPPETEER_CACHE_DIR) {
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
 const SESSION_NAME = process.env.WHATSAPP_SESSION || 'cobranca';
-// Usar BOT_PORT primeiro, depois PORT (se não for 8000), ou padrão 3001
-// IMPORTANTE: No Fly.io, PORT=8000 é para Django, então sempre usar BOT_PORT
-const BOT_PORT = process.env.BOT_PORT || (process.env.PORT && process.env.PORT !== '8000' ? process.env.PORT : null) || 3001;
+// No Koyeb, cada app tem sua própria variável PORT
+// Se BOT_PORT estiver definido, usar ele; senão usar PORT do Koyeb; senão padrão 3001
+const BOT_PORT = process.env.BOT_PORT || process.env.PORT || 3001;
 
 let whatsappClient = null;
 let qrCodeBase64 = null;
