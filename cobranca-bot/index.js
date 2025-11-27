@@ -465,19 +465,21 @@ async function initializeWhatsApp() {
       waitForLogin: false, // Não esperar login automático - forçar QR Code
       autoClose: 60000, // Fechar automaticamente após 60 segundos se não conectar
       browserArgs: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--remote-debugging-port=0',
-        '--disable-blink-features=AutomationControlled',
+        // Flags OBRIGATÓRIAS para Render/Koyeb (sem essas, o container mata o processo)
+        '--no-sandbox', // ESSENCIAL - Render/Koyeb não permitem sandbox
+        '--disable-setuid-sandbox', // ESSENCIAL - Desabilita sandbox de setuid
+        '--disable-dev-shm-usage', // ESSENCIAL - Evita problemas de memória compartilhada
+        '--single-process', // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
+        '--no-zygote', // ESSENCIAL - Desabilita zygote (necessário com single-process)
+        '--disable-gpu', // ESSENCIAL - Desabilita GPU (não disponível em containers)
+        '--disable-software-rasterizer', // ESSENCIAL - Desabilita rasterização por software
+        '--disable-dev-tools', // ESSENCIAL - Desabilita DevTools (evita problemas de WebSocket)
+        '--no-first-run', // Evita primeira execução
+        '--disable-accelerated-2d-canvas', // Desabilita aceleração 2D
+        '--disable-web-security', // Desabilita segurança web (para desenvolvimento)
+        '--disable-features=VizDisplayCompositor', // Desabilita compositor de display
+        '--remote-debugging-port=0', // Porta aleatória para DevTools
+        '--disable-blink-features=AutomationControlled', // Desabilita detecção de automação
         '--disable-extensions',
         '--disable-background-networking',
         '--disable-background-timer-throttling',
@@ -504,15 +506,17 @@ async function initializeWhatsApp() {
         // Usar o caminho do Chromium detectado (ou variável de ambiente)
         executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
+          // Flags OBRIGATÓRIAS para Render/Koyeb (duplicadas aqui para garantir)
+          '--no-sandbox', // ESSENCIAL
+          '--disable-setuid-sandbox', // ESSENCIAL
+          '--disable-dev-shm-usage', // ESSENCIAL
+          '--single-process', // ESSENCIAL
+          '--no-zygote', // ESSENCIAL
+          '--disable-gpu', // ESSENCIAL
+          '--disable-software-rasterizer', // ESSENCIAL
+          '--disable-dev-tools', // ESSENCIAL - Evita problemas de WebSocket
           '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu',
-          '--disable-software-rasterizer',
+          '--disable-accelerated-2d-canvas',
           '--disable-extensions',
           '--disable-background-networking',
           '--disable-background-timer-throttling',

@@ -24,14 +24,24 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Encontrar o binário real do Chromium (pode estar em /usr/lib/chromium/chromium)
+# Encontrar o binário real do Chromium e garantir permissões
 RUN CHROMIUM_REAL=$(find /usr -name chromium -type f -executable -size +1M 2>/dev/null | head -1) && \
     if [ -n "$CHROMIUM_REAL" ]; then \
         echo "✅ Chromium binário encontrado em: $CHROMIUM_REAL"; \
+        chmod +x "$CHROMIUM_REAL" && \
+        echo "✅ Permissões de execução garantidas para: $CHROMIUM_REAL"; \
         echo "export CHROMIUM_REAL_PATH=$CHROMIUM_REAL" >> /etc/profile; \
     else \
         echo "⚠️ Usando /usr/bin/chromium como fallback"; \
+        if [ -f "/usr/bin/chromium" ]; then \
+            chmod +x /usr/bin/chromium; \
+        fi; \
         echo "export CHROMIUM_REAL_PATH=/usr/bin/chromium" >> /etc/profile; \
+    fi && \
+    # Garantir permissões também para /usr/lib/chromium/chromium (caminho comum)
+    if [ -f "/usr/lib/chromium/chromium" ]; then \
+        chmod +x /usr/lib/chromium/chromium && \
+        echo "✅ Permissões garantidas para /usr/lib/chromium/chromium"; \
     fi
 
 # Variáveis do Puppeteer (serão sobrescritas pelo código se encontrar binário real)
