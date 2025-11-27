@@ -1,0 +1,55 @@
+================================================================================
+  BUILD COMMAND COMPLETO COM CHROME
+================================================================================
+
+Copie e cole este comando no campo "Build Command" do Render:
+
+pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_users && cd cobranca-bot && npm install && npx puppeteer browsers install chrome && cd ..
+
+================================================================================
+  EXPLICAÇÃO
+================================================================================
+
+1. pip install -r requirements.txt
+   → Instala dependências Python
+
+2. python manage.py migrate --noinput
+   → Aplica migrações do banco
+
+3. python manage.py collectstatic --noinput
+   → Coleta arquivos estáticos
+
+4. python manage.py create_users
+   → Cria usuários thiago e jeff
+
+5. cd cobranca-bot && npm install
+   → Instala dependências Node.js
+
+6. npx puppeteer browsers install chrome
+   → Instala Chrome para o Puppeteer (necessário para WhatsApp Web)
+
+7. cd ..
+   → Volta para o diretório raiz
+
+================================================================================
+  ALTERNATIVA: SE O CHROME NÃO INSTALAR
+================================================================================
+
+Se o comando acima falhar ao instalar Chrome, tente:
+
+pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_users && cd cobranca-bot && npm install && (npx puppeteer browsers install chrome || echo "Chrome installation failed, will use system Chromium") && cd ..
+
+Isso continua mesmo se a instalação do Chrome falhar.
+
+================================================================================
+  VARIÁVEIS DE AMBIENTE (se necessário)
+================================================================================
+
+Se ainda não funcionar, adicione estas variáveis de ambiente no Render:
+
+PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
+CHROMIUM_PATH=/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux/chrome
+
+================================================================================
+
