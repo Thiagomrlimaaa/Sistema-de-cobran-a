@@ -85,9 +85,8 @@ function findChromium() {
     console.log(`⚠️ Erro ao usar glob: ${e.message}`);
   }
   
-  // Tentar caminhos do sistema
+  // Tentar outros caminhos do sistema (já verificamos /usr/bin/chromium acima)
   const systemPaths = [
-    '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome',
     '/usr/bin/google-chrome-stable',
