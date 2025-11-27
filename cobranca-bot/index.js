@@ -455,8 +455,8 @@ async function initializeWhatsApp() {
       puppeteerOptions: {
         headless: true,
         // SEMPRE usar /usr/bin/chromium (instalado via render-build.sh)
-        // Isso garante que o Puppeteer use o Chrome instalado pelo apt-get no Render
-        executablePath: CHROMIUM_PATH || '/usr/bin/chromium',
+        // puppeteer-core não baixa Chrome, então precisamos especificar o caminho
+        executablePath: '/usr/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
