@@ -14,7 +14,14 @@ function findChromium() {
   console.log(`🔍 PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'não definido'}`);
   console.log(`🔍 CHROMIUM_PATH: ${process.env.CHROMIUM_PATH || 'não definido'}`);
   
-  // Primeiro, tentar variáveis de ambiente
+  // PRIMEIRO: Tentar Chromium do sistema (instalado via apt-get) - SOLUÇÃO DEFINITIVA
+  const systemChromium = '/usr/bin/chromium';
+  if (fs.existsSync(systemChromium)) {
+    console.log(`✅ Chromium do sistema encontrado em: ${systemChromium}`);
+    return systemChromium;
+  }
+  
+  // Segundo: tentar variáveis de ambiente
   if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
     console.log(`✅ Chrome encontrado via PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
     return process.env.PUPPETEER_EXECUTABLE_PATH;
