@@ -14,12 +14,15 @@ function findChromium() {
   console.log(`🔍 PUPPETEER_EXECUTABLE_PATH: ${process.env.PUPPETEER_EXECUTABLE_PATH || 'não definido'}`);
   console.log(`🔍 CHROMIUM_PATH: ${process.env.CHROMIUM_PATH || 'não definido'}`);
   
-  // PRIMEIRO: Tentar Chromium do sistema (instalado via apt-get) - SOLUÇÃO DEFINITIVA
+  // PRIMEIRO: Tentar Chromium do sistema (se disponível)
   const systemChromium = '/usr/bin/chromium';
   if (fs.existsSync(systemChromium)) {
     console.log(`✅ Chromium do sistema encontrado em: ${systemChromium}`);
     return systemChromium;
   }
+  
+  // NOTA: No Render, apt-get não funciona (sistema somente leitura)
+  // Então vamos usar o Chrome instalado pelo Puppeteer
   
   // Segundo: tentar variáveis de ambiente
   if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
@@ -448,8 +451,8 @@ async function initializeWhatsApp() {
       ],
       puppeteerOptions: {
         headless: true,
-        // SOLUÇÃO DEFINITIVA: Usar /usr/bin/chromium (instalado via apt-get)
-        executablePath: chromiumPath || '/usr/bin/chromium',
+        // Usar chromiumPath encontrado (prioriza Chrome do Puppeteer, depois /usr/bin/chromium se disponível)
+        executablePath: chromiumPath || undefined, // undefined = Puppeteer usa o Chrome padrão
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',

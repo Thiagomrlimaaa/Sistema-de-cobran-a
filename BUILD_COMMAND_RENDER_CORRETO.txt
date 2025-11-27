@@ -1,13 +1,14 @@
 ================================================================================
-  BUILD COMMAND DEFINITIVO PARA RENDER (COM CHROMIUM)
+  BUILD COMMAND CORRETO PARA RENDER (COM CHROME DO PUPPETEER)
 ================================================================================
 
 Copie e cole este comando no campo "Build Command" do Render:
 
-pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_users && cd cobranca-bot && apt-get update && apt-get install -y chromium && npm install && cd ..
+pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_users && cd cobranca-bot && npm install && npx puppeteer browsers install chrome && cd ..
 
-SOLUÇÃO DEFINITIVA: Instala Chromium diretamente no sistema via apt-get.
-O código usa /usr/bin/chromium automaticamente (100% funciona no Render).
+IMPORTANTE: O Render NÃO permite apt-get (sistema somente leitura).
+A solução é usar o Chrome instalado pelo Puppeteer, que será encontrado automaticamente.
+O código procura o Chrome em vários locais, incluindo /opt/render/.cache/puppeteer/chrome/
 
 ================================================================================
   START COMMAND CORRETO PARA RENDER
