@@ -29,9 +29,9 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Exporta caminho do Chromium
-ENV CHROMIUM_PATH=/usr/bin/chromium
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Exporta caminho do Chromium (binário real geralmente está em /usr/lib/chromium/chromium)
+ENV CHROMIUM_PATH=/usr/lib/chromium/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/lib/chromium/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app

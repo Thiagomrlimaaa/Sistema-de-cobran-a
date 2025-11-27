@@ -482,15 +482,35 @@ async function initializeWhatsApp() {
       // IMPORTANTE: WPPConnect ignora browserArgs em versões recentes
       // Todas as flags DEVEM estar em puppeteerOptions.args
       puppeteerOptions: {
-        headless: true, // Headless mode
-        executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', // Chromium do Debian
+        headless: 'new', // Novo modo headless
+        executablePath: process.env.CHROMIUM_PATH || '/usr/lib/chromium/chromium', // Caminho correto do Chromium
+        userDataDir: userDataDir, // Diretório de dados do navegador
         args: [
-          // Flags OBRIGATÓRIAS para Render/Koyeb (Chromium do Debian funciona bem com essas flags)
+          // Flags OBRIGATÓRIAS para Render/Koyeb (sem essas, Chromium fecha imediatamente)
           '--no-sandbox', // ESSENCIAL - Render/Koyeb não permitem sandbox
           '--disable-setuid-sandbox', // ESSENCIAL - Desabilita sandbox de setuid
           '--disable-gpu', // ESSENCIAL - Desabilita GPU (não disponível em containers)
           '--disable-dev-shm-usage', // ESSENCIAL - Evita problemas de memória compartilhada
-          '--single-process' // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
+          '--disable-extensions', // Desabilita extensões
+          '--disable-background-networking', // Desabilita rede em background
+          '--disable-default-apps', // Desabilita apps padrão
+          '--disable-sync', // Desabilita sincronização
+          '--disable-translate', // Desabilita tradução
+          '--disable-features=site-per-process', // Desabilita site-per-process
+          '--disable-breakpad', // Desabilita breakpad
+          '--disable-hang-monitor', // Desabilita monitor de hang
+          '--disable-infobars', // Desabilita barras de informação
+          '--disable-logging', // Desabilita logging
+          '--disable-notifications', // Desabilita notificações
+          '--disable-component-extensions-with-background-pages', // Desabilita extensões com background
+          '--disk-cache-size=0', // Desabilita cache em disco
+          '--media-cache-size=0', // Desabilita cache de mídia
+          '--headless=new', // Novo modo headless
+          '--remote-debugging-port=0', // Porta aleatória para debug remoto
+          '--remote-allow-origins=*', // Permite origens remotas
+          '--single-process', // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
+          '--no-first-run', // Evita primeira execução
+          '--no-zygote' // ESSENCIAL - Desabilita zygote (necessário com single-process)
         ],
         timeout: 180000, // Timeout de 3 minutos
         protocolTimeout: 300000 // Protocol timeout de 5 minutos
