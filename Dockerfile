@@ -42,9 +42,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copia script de inicialização primeiro
-COPY start.sh /app/start.sh
-
 # Copia projeto inteiro
 COPY . .
 
@@ -54,6 +51,9 @@ RUN npm install
 
 # Volta para raiz
 WORKDIR /app
+
+# Coletar arquivos estáticos durante o build (opcional - não falha se não houver)
+RUN python manage.py collectstatic --noinput 2>&1 || true
 
 # Tornar script de inicialização executável
 RUN chmod +x start.sh

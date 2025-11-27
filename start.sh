@@ -3,9 +3,6 @@
 # Aplicar migrações (ignora erro se não houver banco configurado)
 python manage.py migrate --noinput || echo "⚠️ Migrações não aplicadas (pode ser normal se não houver DATABASE_URL)"
 
-# Coletar arquivos estáticos (ignora erro se não houver arquivos estáticos)
-python manage.py collectstatic --noinput || echo "⚠️ Collectstatic falhou (pode ser normal)"
-
 # Iniciar bot em background
 echo "🚀 Iniciando bot WhatsApp..."
 cd /app/cobranca-bot
