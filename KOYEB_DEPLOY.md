@@ -11,8 +11,9 @@ Configure as seguintes variáveis de ambiente no painel do Koyeb:
 #### Django
 - `DJANGO_SECRET_KEY` - Chave secreta do Django (gerar uma nova)
 - `DJANGO_DEBUG` - `False` para produção
-- `DJANGO_ALLOWED_HOSTS` - `*` (ou domínio específico do Koyeb)
+- `DJANGO_ALLOWED_HOSTS` - `*` (ou domínio específico do Koyeb) - **Opcional**: já configurado automaticamente
 - `DJANGO_API_URL` - URL da API Django (ex: `https://seu-servico.koyeb.app/api`)
+- `KOYEB_APP_URL` - URL completa do app no Koyeb (ex: `https://seu-app.koyeb.app`) - **Opcional**: CSRF já configurado automaticamente
 
 #### Bot WhatsApp
 - `WHATSAPP_SESSION` - Nome da sessão (padrão: `cobranca`)
@@ -51,6 +52,7 @@ Configure as seguintes variáveis de ambiente no painel do Koyeb:
 - O bot roda na porta 3001 (background)
 - O Chromium está instalado e configurado automaticamente
 - O container roda 24/7 sem limitações no Koyeb
+- **CSRF está configurado automaticamente** para o domínio do Koyeb (não precisa configurar manualmente)
 
 ## 📝 Notas
 
