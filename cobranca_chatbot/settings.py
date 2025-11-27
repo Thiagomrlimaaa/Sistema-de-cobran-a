@@ -55,7 +55,7 @@ else:
                 # Adicionar domínio do Koyeb hardcoded (fallback)
                 ALLOWED_HOSTS = ["acute-crab-thiagocobrancas-328dda69.koyeb.app", "localhost", "127.0.0.1"]
 
-# CSRF Trusted Origins (necessário para Fly.io)
+# CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = []
 
 # Primeiro, verificar se está definido via variável de ambiente
@@ -63,15 +63,12 @@ csrf_env = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 if csrf_env:
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_env.split() if origin.strip()]
 
-# Se não definido e em produção, usar ALLOWED_HOSTS
-if not CSRF_TRUSTED_ORIGINS and not DEBUG and ALLOWED_HOSTS:
-    CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host and host != "*"]
+# Adicionar domínio do Koyeb SEMPRE (prioridade)
+koyeb_domain = "https://acute-crab-thiagocobrancas-328dda69.koyeb.app"
+if koyeb_domain not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(koyeb_domain)
 
-# Em desenvolvimento, permitir localhost
-if not CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
-
-# Garantir que o domínio do Koyeb está sempre incluído (se detectado)
+# Verificar variável de ambiente do Koyeb também
 koyeb_url = os.getenv("KOYEB_APP_URL", "")
 if koyeb_url and ".koyeb.app" in koyeb_url:
     if not koyeb_url.startswith("https://"):
@@ -79,10 +76,20 @@ if koyeb_url and ".koyeb.app" in koyeb_url:
     if koyeb_url not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(koyeb_url)
 
-# Adicionar domínio do Koyeb hardcoded (fallback se variável não estiver configurada)
-koyeb_domain = "https://acute-crab-thiagocobrancas-328dda69.koyeb.app"
-if koyeb_domain not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(koyeb_domain)
+# Se não definido e em produção, usar ALLOWED_HOSTS
+if not CSRF_TRUSTED_ORIGINS and not DEBUG and ALLOWED_HOSTS:
+    for host in ALLOWED_HOSTS:
+        if host and host != "*":
+            origin = f"https://{host}"
+            if origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(origin)
+
+# Em desenvolvimento, permitir localhost
+if DEBUG:
+    localhost_origins = ["http://localhost:8000", "http://127.0.0.1:8000"]
+    for origin in localhost_origins:
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Garantir que o domínio do Fly.io está sempre incluído (fallback)
 fly_domain = "https://chatbot-cobrana-silent-feather-3785.fly.dev"
@@ -229,13 +236,22 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
-# Session and CSRF cookie settings for HTTPS (Fly.io)
+# Session and CSRF cookie settings for HTTPS
+# No Koyeb, sempre usar HTTPS, então cookies seguros
 SESSION_COOKIE_SECURE = not DEBUG  # True em produção (HTTPS)
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = not DEBUG  # True em produção (HTTPS)
 CSRF_COOKIE_HTTPONLY = False  # False para permitir JavaScript ler o cookie (necessário para AJAX)
 CSRF_COOKIE_SAMESITE = 'Lax'
+# Garantir que CSRF funciona mesmo com proxy reverso - remover duplicatas
+CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))  # Remove duplicatas
+CSRF_USE_SESSIONS = False  # Usar cookies ao invés de sessão para CSRF
+
+# Debug: Log CSRF_TRUSTED_ORIGINS (apenas em desenvolvimento)
+if DEBUG:
+    print(f"🔒 CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
+    print(f"🌐 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
