@@ -1,0 +1,127 @@
+═══════════════════════════════════════════════════════════
+  CHATBOT DE COBRANÇA - GUIA DE INSTALAÇÃO E USO
+═══════════════════════════════════════════════════════════
+
+📋 PRÉ-REQUISITOS
+─────────────────
+Antes de começar, você precisa ter instalado:
+  ✅ Python 3.11 ou superior
+     Download: https://www.python.org/downloads/
+  
+  ✅ Node.js 18 ou superior
+     Download: https://nodejs.org/
+
+═══════════════════════════════════════════════════════════
+
+🚀 PRIMEIRA VEZ - CONFIGURAÇÃO INICIAL
+───────────────────────────────────────
+
+1. Abra a pasta: "Configuração do Sistema"
+2. Execute: configurar_sistema.bat
+   - Isso instalará todas as dependências
+   - Configurará o banco de dados
+   - Criará os usuários de acesso
+
+3. Aguarde a conclusão (pode demorar alguns minutos)
+
+═══════════════════════════════════════════════════════════
+
+▶️  COMO INICIAR O SISTEMA
+──────────────────────────
+
+OPÇÃO 1 - Iniciar tudo de uma vez (RECOMENDADO):
+  Na pasta "Configuração do Sistema", execute: iniciar_sistema.bat
+  - Abrirá 2 janelas automaticamente
+  - Uma para Django (Interface Web)
+  - Uma para Bot WhatsApp
+
+OPÇÃO 2 - Iniciar separadamente:
+  Na pasta "Configuração do Sistema":
+  - Execute: iniciar_django.bat (para interface web)
+  - Execute: iniciar_bot.bat (para bot WhatsApp)
+  - Abra cada um em um terminal separado
+
+═══════════════════════════════════════════════════════════
+
+🌐 ACESSAR O SISTEMA
+────────────────────
+
+1. Abra seu navegador
+2. Acesse: http://localhost:8000
+3. Faça login com:
+   - Usuário: jeff
+   - Senha: 1
+   
+   OU
+   
+   - Usuário: thiago
+   - Senha: 1
+
+═══════════════════════════════════════════════════════════
+
+📱 CONECTAR WHATSAPP
+────────────────────
+
+1. Após fazer login, vá em "WhatsApp Bot" no menu
+2. Clique em "Iniciar Bot"
+3. O QR Code aparecerá na tela
+4. Escaneie com seu WhatsApp
+5. Pronto! ✅
+
+═══════════════════════════════════════════════════════════
+
+⏹️  PARAR O SISTEMA
+────────────────────
+
+Na pasta "Configuração do Sistema", execute: parar_sistema.bat
+  - Encerrará todos os processos
+  - Ou simplesmente feche as janelas abertas
+
+═══════════════════════════════════════════════════════════
+
+⚠️  IMPORTANTE
+──────────────
+
+- Mantenha as janelas abertas enquanto usar o sistema
+- Não feche as janelas do Django e Bot
+- Na primeira vez, você precisará escanear o QR Code
+- Após escanear, o bot fica conectado automaticamente
+
+═══════════════════════════════════════════════════════════
+
+🐛 PROBLEMAS COMUNS
+───────────────────
+
+❌ "Python não encontrado"
+   → Instale Python 3.11+ e marque "Add to PATH"
+
+❌ "Node.js não encontrado"
+   → Instale Node.js 18+ e marque "Add to PATH"
+
+❌ "Porta 8000 já está em uso"
+   → Feche outros programas usando a porta 8000
+   → Ou execute: parar_sistema.bat
+
+❌ "Porta 3001 já está em uso"
+   → Feche outros programas usando a porta 3001
+   → Ou execute: parar_sistema.bat
+
+❌ "Não foi possível conectar ao bot"
+   → Verifique se o bot está rodando (janela aberta)
+   → Verifique se está na porta 3001
+
+═══════════════════════════════════════════════════════════
+
+📞 ARQUIVOS DISPONÍVEIS
+───────────────────────
+
+Todos os arquivos estão na pasta "Configuração do Sistema":
+
+  configurar_sistema.bat  → Configuração inicial (1ª vez)
+  iniciar_sistema.bat     → Inicia tudo (recomendado)
+  iniciar_django.bat      → Inicia apenas Django
+  iniciar_bot.bat         → Inicia apenas Bot
+  parar_sistema.bat       → Para todos os processos
+
+═══════════════════════════════════════════════════════════
+

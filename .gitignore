@@ -58,6 +58,8 @@ package-lock.json
 .wppconnect-session/
 *.session
 *.data.json
+tokens/
+cobranca-bot/tokens/
 
 # Arquivos de ambiente
 .env

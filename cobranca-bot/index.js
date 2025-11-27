@@ -7,143 +7,94 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// SOLUÇÃO: Usar Chrome instalado via apt-get no Koyeb
-// O Koyeb instala Chromium no caminho /usr/bin/chromium
-const DEFAULT_CHROME_PATH = '/usr/bin/chromium';
-
-// Caminho do cache do Puppeteer no Render
+// Configuração para ambiente LOCAL
+// O Puppeteer irá baixar e usar o Chrome automaticamente
 function getChromiumPath() {
-  console.log('🔍 Procurando Chrome/Chromium...');
+  console.log('🔍 Procurando Chrome/Chromium para ambiente LOCAL...');
 
-  // PRIORIDADE 1: Chromium instalado via apt-get no Koyeb
-  // No Debian slim, /usr/bin/chromium pode ser um wrapper script
-  // Tentar encontrar o binário real
-  const possiblePaths = [
-    '/usr/lib/chromium/chromium', // Binário real no Debian
-    '/usr/lib/chromium-browser/chromium-browser', // Alternativa
-    '/usr/bin/chromium-browser', // Outro caminho comum
-    '/usr/bin/chromium', // Wrapper script (fallback)
-  ];
-
-  for (const testPath of possiblePaths) {
-    if (fs.existsSync(testPath)) {
-      try {
-        // Verificar se é um arquivo executável (não apenas um script pequeno)
-        const stats = fs.statSync(testPath);
-        // Se for maior que 1MB, provavelmente é o binário real
-        if (stats.isFile() && stats.size > 1000000) {
-          console.log(`✅ Chromium binário encontrado em: ${testPath} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
-          return testPath;
-        } else if (stats.isFile() && stats.size < 10000) {
-          // Se for pequeno, pode ser um wrapper script - tentar ler para encontrar o binário real
-          console.log(`⚠️ ${testPath} parece ser um wrapper script (${stats.size} bytes), procurando binário real...`);
-          try {
-            const content = fs.readFileSync(testPath, 'utf8');
-            // Procurar por referências ao binário real no script
-            const realPathMatch = content.match(/\/usr\/lib\/chromium[^"'\s]*/);
-            if (realPathMatch) {
-              const realPath = realPathMatch[0];
-              if (fs.existsSync(realPath)) {
-                console.log(`✅ Binário real encontrado via wrapper: ${realPath}`);
-                return realPath;
-              }
-            }
-          } catch (readErr) {
-            // Ignorar erro de leitura
-          }
-        }
-      } catch (statErr) {
-        // Continuar procurando
-      }
-    }
-  }
-
-  // Se encontrou /usr/bin/chromium mas é pequeno, usar mesmo assim (pode funcionar)
-  if (fs.existsSync(DEFAULT_CHROME_PATH)) {
-    console.log(`✅ Chromium do sistema encontrado em: ${DEFAULT_CHROME_PATH}`);
-    return DEFAULT_CHROME_PATH;
-  }
-  
-  // Verificar variáveis de ambiente (fallback)
+  // PRIORIDADE 1: Variável de ambiente (se definida)
   const envPath = process.env.CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
   if (envPath && fs.existsSync(envPath)) {
     console.log(`✅ Chromium de variável de ambiente encontrado em: ${envPath}`);
     return envPath;
   }
   
-  // Primeiro, tentar listar o diretório do cache do Puppeteer
-  const cacheDir = process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer';
-  console.log(`📁 Cache do Puppeteer: ${cacheDir}`);
+  // PRIORIDADE 2: Cache local do Puppeteer (node_modules/.cache/puppeteer)
+  const localCacheDir = path.join(__dirname, 'node_modules', '.cache', 'puppeteer');
+  console.log(`📁 Cache local do Puppeteer: ${localCacheDir}`);
   
-  // Tentar caminho do Puppeteer no Render primeiro
-  const puppeteerPaths = [
-    '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome',
-    '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux/chrome',
-    path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', 'linux-*', 'chrome-linux64', 'chrome'),
-    path.join(__dirname, 'node_modules', '.cache', 'puppeteer', 'chrome', 'linux-*', 'chrome-linux', 'chrome'),
-  ];
-  
-  // Tentar encontrar usando glob
-  try {
-    const { glob } = require('glob');
-    for (const pattern of puppeteerPaths) {
-      try {
-        console.log(`🔍 Procurando em: ${pattern}`);
-        const files = glob.sync(pattern, { absolute: true });
-        console.log(`🔍 Encontrados ${files.length} arquivos`);
-        
-        for (const file of files) {
-          if (fs.existsSync(file)) {
-            // Verificar se é executável
-            try {
-              fs.accessSync(file, fs.constants.F_OK | fs.constants.X_OK);
+  if (fs.existsSync(localCacheDir)) {
+    try {
+      const { glob } = require('glob');
+      const puppeteerPatterns = [
+        path.join(localCacheDir, 'chrome', '**', 'chrome-linux64', 'chrome'),
+        path.join(localCacheDir, 'chrome', '**', 'chrome-linux', 'chrome'),
+        path.join(localCacheDir, 'chrome', '**', 'chrome-win64', 'chrome.exe'),
+        path.join(localCacheDir, 'chrome', '**', 'chrome-win', 'chrome.exe'),
+        path.join(localCacheDir, 'chrome', '**', 'chrome-mac-arm64', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'),
+        path.join(localCacheDir, 'chrome', '**', 'chrome-mac-x64', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'),
+      ];
+      
+      for (const pattern of puppeteerPatterns) {
+        try {
+          const files = glob.sync(pattern, { absolute: true });
+          for (const file of files) {
+            if (fs.existsSync(file)) {
               console.log(`✅ Chrome do Puppeteer encontrado em: ${file}`);
               return file;
-            } catch (e) {
-              console.log(`⚠️ Arquivo encontrado mas não executável: ${file}`);
             }
           }
-        }
-      } catch (e) {
-        console.log(`⚠️ Erro ao procurar em ${pattern}: ${e.message}`);
-      }
-    }
-  } catch (e) {
-    console.log(`⚠️ Erro ao usar glob: ${e.message}`);
-  }
-  
-  // Tentar listar diretórios manualmente
-  try {
-    console.log(`🔍 Listando diretório do cache: ${cacheDir}`);
-    if (fs.existsSync(cacheDir)) {
-      const entries = fs.readdirSync(cacheDir, { withFileTypes: true });
-      console.log(`📁 Entradas no cache: ${entries.length}`);
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          console.log(`📁 Diretório encontrado: ${entry.name}`);
-          const chromePath = path.join(cacheDir, entry.name, 'chrome-linux64', 'chrome');
-          if (fs.existsSync(chromePath)) {
-            console.log(`✅ Chrome encontrado manualmente em: ${chromePath}`);
-            return chromePath;
-          }
-          // Tentar chrome-linux também
-          const chromePath2 = path.join(cacheDir, entry.name, 'chrome-linux', 'chrome');
-          if (fs.existsSync(chromePath2)) {
-            console.log(`✅ Chrome encontrado manualmente em: ${chromePath2}`);
-            return chromePath2;
-          }
+        } catch (e) {
+          // Continuar procurando
         }
       }
+    } catch (e) {
+      console.log(`⚠️ Erro ao procurar Chrome no cache: ${e.message}`);
     }
-  } catch (e) {
-    console.log(`⚠️ Erro ao listar cache: ${e.message}`);
   }
   
-  // Se chegou aqui, não encontrou Chromium em nenhum lugar
-  console.log('⚠️ Chrome não encontrado em nenhum local');
-  console.log('⚠️ Tentando usar /usr/bin/chromium mesmo assim (pode falhar se não estiver instalado)');
-  // Retornar /usr/bin/chromium como fallback (será instalado pelo Dockerfile)
-  return DEFAULT_CHROME_PATH;
+  // PRIORIDADE 3: Caminhos comuns do sistema (Windows, Linux, macOS)
+  const systemPaths = [];
+  
+  // Windows
+  if (process.platform === 'win32') {
+    systemPaths.push(
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
+      process.env.PROGRAMFILES + '\\Google\\Chrome\\Application\\chrome.exe',
+      process.env['PROGRAMFILES(X86)'] + '\\Google\\Chrome\\Application\\chrome.exe'
+    );
+  }
+  // Linux
+  else if (process.platform === 'linux') {
+    systemPaths.push(
+      '/usr/bin/google-chrome',
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/chromium',
+      '/usr/bin/chromium-browser',
+      '/snap/bin/chromium'
+    );
+  }
+  // macOS
+  else if (process.platform === 'darwin') {
+    systemPaths.push(
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium'
+    );
+  }
+  
+  for (const testPath of systemPaths) {
+    if (testPath && fs.existsSync(testPath)) {
+      console.log(`✅ Chrome do sistema encontrado em: ${testPath}`);
+      return testPath;
+    }
+  }
+  
+  // Se não encontrou, retornar null - Puppeteer usará o padrão (baixará automaticamente)
+  console.log('ℹ️ Chrome não encontrado - Puppeteer baixará automaticamente na primeira execução');
+  console.log('ℹ️ Execute: npx puppeteer browsers install chrome');
+  return null;
 }
 
 const CHROMIUM_PATH = getChromiumPath();
@@ -151,23 +102,14 @@ const CHROMIUM_PATH = getChromiumPath();
 // Log do resultado
 if (CHROMIUM_PATH) {
   console.log(`✅ CHROMIUM_PATH definido como: ${CHROMIUM_PATH}`);
-  // Definir variável de ambiente para o Puppeteer usar
   process.env.PUPPETEER_EXECUTABLE_PATH = CHROMIUM_PATH;
-  console.log(`✅ PUPPETEER_EXECUTABLE_PATH definido como: ${CHROMIUM_PATH}`);
 } else {
-  console.log('⚠️ CHROMIUM_PATH não definido - Puppeteer usará o padrão');
-}
-
-// Configurar PUPPETEER_CACHE_DIR se não estiver definido
-if (!process.env.PUPPETEER_CACHE_DIR) {
-  process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
-  console.log(`✅ PUPPETEER_CACHE_DIR definido como: ${process.env.PUPPETEER_CACHE_DIR}`);
+  console.log('ℹ️ CHROMIUM_PATH não definido - Puppeteer usará o Chrome baixado automaticamente');
 }
 
 const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000/api';
 const SESSION_NAME = process.env.WHATSAPP_SESSION || 'cobranca';
-// No Koyeb, cada app tem sua própria variável PORT
-// Se BOT_PORT estiver definido, usar ele; senão usar PORT do Koyeb; senão padrão 3001
+// Porta para ambiente LOCAL
 const BOT_PORT = process.env.BOT_PORT || process.env.PORT || 3001;
 
 let whatsappClient = null;
@@ -385,19 +327,6 @@ async function initializeWhatsApp() {
     const path = require('path');
     const sessionPath = path.join(__dirname, 'tokens', SESSION_NAME);
     
-    // Verificar se há processos do Chromium rodando para esta sessão
-    const { execSync } = require('child_process');
-    try {
-      console.log('🔧 Verificando processos do Chromium...');
-      // Tentar matar processos de forma mais suave
-      execSync('killall chromium chromium-browser chrome 2>/dev/null || true', { stdio: 'ignore' });
-      execSync('pkill -9 -f puppeteer 2>/dev/null || true', { stdio: 'ignore' });
-      console.log('✅ Processos antigos limpos');
-    } catch (killError) {
-      // Ignorar erros - pode não haver processos
-      console.log('⚠️ Processos já limpos ou não existem');
-    }
-    
     // Limpar diretório de sessão antiga se existir (forçar novo QR Code)
     try {
       const browserDataPath = path.join(sessionPath, 'browser_data');
@@ -411,7 +340,7 @@ async function initializeWhatsApp() {
     }
     
     // Aguardar um pouco para garantir que processos foram finalizados
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
   } catch (cleanupError) {
     console.log('⚠️ Erro ao limpar sessão antiga:', cleanupError.message);
   }
@@ -431,22 +360,22 @@ async function initializeWhatsApp() {
     if (fs.existsSync(CHROMIUM_PATH)) {
       console.log(`✅ Chromium encontrado e verificado em: ${CHROMIUM_PATH}`);
       
-      // PASSO 2: Garantir permissões de execução do Chromium (OBRIGATÓRIO)
-      try {
-        fs.chmodSync(CHROMIUM_PATH, 0o755);
-        console.log(`✅ Permissões de execução garantidas para: ${CHROMIUM_PATH}`);
-      } catch (chmodErr) {
-        console.error(`❌ Erro ao tornar Chromium executável: ${chmodErr.message}`);
-        console.error('⚠️ Continuando mesmo assim...');
+      // Garantir permissões de execução (apenas no Linux/macOS)
+      if (process.platform !== 'win32') {
+        try {
+          fs.chmodSync(CHROMIUM_PATH, 0o755);
+          console.log(`✅ Permissões de execução garantidas para: ${CHROMIUM_PATH}`);
+        } catch (chmodErr) {
+          console.log(`⚠️ Erro ao definir permissões (pode ser normal): ${chmodErr.message}`);
+        }
       }
     } else {
-      console.error(`❌ Chromium não encontrado em: ${CHROMIUM_PATH}`);
-      console.error('❌ Tentando continuar com o padrão do Puppeteer...');
+      console.log(`⚠️ Chromium não encontrado em: ${CHROMIUM_PATH}`);
+      console.log('ℹ️ Puppeteer tentará usar o Chrome padrão ou baixar automaticamente');
     }
   } else {
-    console.log('⚠️ Chromium não encontrado em nenhum local');
-    console.log('⚠️ Puppeteer tentará usar o Chrome padrão (pode falhar)');
-    console.log('⚠️ Certifique-se de que o Chrome foi instalado com: npx puppeteer browsers install chrome');
+    console.log('ℹ️ Chromium não especificado - Puppeteer usará o Chrome padrão');
+    console.log('ℹ️ Se necessário, instale com: npx puppeteer browsers install chrome');
   }
   
   // Usar userDataDir único para evitar conflitos
@@ -465,11 +394,32 @@ async function initializeWhatsApp() {
     console.log('⚠️ Erro ao criar diretório:', dirError.message);
   }
   
+  // Configuração para ambiente LOCAL
+  const isHeadless = process.env.HEADLESS !== 'false'; // Por padrão headless, mas pode desabilitar
+  const puppeteerArgs = [
+    '--no-sandbox', // Necessário em alguns ambientes
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage', // Evita problemas de memória compartilhada
+    '--disable-extensions',
+    '--disable-background-networking',
+    '--disable-default-apps',
+    '--disable-sync',
+    '--disable-translate',
+    '--disable-infobars',
+    '--disable-notifications',
+    '--no-first-run',
+  ];
+
+  // Adicionar flag headless apenas se necessário
+  if (isHeadless) {
+    puppeteerArgs.push('--headless=new');
+  }
+
   return wppconnect
     .create({
       session: SESSION_NAME,
-      useChrome: false, // Usar Chromium do sistema (não Chrome)
-      headless: true, // Headless no nível do WPPConnect
+      useChrome: false, // Usar Chromium/Chrome do sistema
+      headless: isHeadless, // Headless configurável
       userDataDir: userDataDir, // Diretório único para dados do navegador
       disableWelcome: true, // Desabilitar mensagem de boas-vindas
       updatesLog: true, // Habilitar logs de atualizações
@@ -478,40 +428,12 @@ async function initializeWhatsApp() {
       browserWS: '', // WebSocket vazio (WPPConnect gerencia)
       tokenStore: 'file', // Armazenar tokens em arquivo
       folderNameToken: 'tokens', // Pasta para tokens
-      deviceName: 'Chromium Headless Koyeb', // Nome do dispositivo
-      // IMPORTANTE: WPPConnect ignora browserArgs em versões recentes
-      // Todas as flags DEVEM estar em puppeteerOptions.args
+      deviceName: 'WhatsApp Bot Local', // Nome do dispositivo
       puppeteerOptions: {
-        headless: 'new', // Novo modo headless
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || '/usr/bin/chromium', // Caminho do Chromium
+        headless: isHeadless ? 'new' : false,
+        executablePath: CHROMIUM_PATH || undefined, // Usar caminho encontrado ou deixar Puppeteer usar padrão
         userDataDir: userDataDir, // Diretório de dados do navegador
-        args: [
-          // Flags OBRIGATÓRIAS para Render/Koyeb (sem essas, Chromium fecha imediatamente)
-          '--no-sandbox', // ESSENCIAL - Render/Koyeb não permitem sandbox
-          '--disable-setuid-sandbox', // ESSENCIAL - Desabilita sandbox de setuid
-          '--disable-gpu', // ESSENCIAL - Desabilita GPU (não disponível em containers)
-          '--disable-dev-shm-usage', // ESSENCIAL - Evita problemas de memória compartilhada
-          '--disable-extensions', // Desabilita extensões
-          '--disable-background-networking', // Desabilita rede em background
-          '--disable-default-apps', // Desabilita apps padrão
-          '--disable-sync', // Desabilita sincronização
-          '--disable-translate', // Desabilita tradução
-          '--disable-features=site-per-process', // Desabilita site-per-process
-          '--disable-breakpad', // Desabilita breakpad
-          '--disable-hang-monitor', // Desabilita monitor de hang
-          '--disable-infobars', // Desabilita barras de informação
-          '--disable-logging', // Desabilita logging
-          '--disable-notifications', // Desabilita notificações
-          '--disable-component-extensions-with-background-pages', // Desabilita extensões com background
-          '--disk-cache-size=0', // Desabilita cache em disco
-          '--media-cache-size=0', // Desabilita cache de mídia
-          '--headless=new', // Novo modo headless
-          '--remote-debugging-port=0', // Porta aleatória para debug remoto
-          '--remote-allow-origins=*', // Permite origens remotas
-          '--single-process', // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
-          '--no-first-run', // Evita primeira execução
-          '--no-zygote' // ESSENCIAL - Desabilita zygote (necessário com single-process)
-        ],
+        args: puppeteerArgs,
         timeout: 180000, // Timeout de 3 minutos
         protocolTimeout: 300000 // Protocol timeout de 5 minutos
       },
@@ -706,21 +628,22 @@ async function disconnect() {
     whatsappClient = null;
   }
 
-  // Matar processos do Chromium/Puppeteer que possam estar travados
-  try {
-    const { execSync } = require('child_process');
-    console.log('🔧 Limpando processos do Chromium...');
+  // Limpar processos do Chromium/Puppeteer (apenas no Linux/macOS)
+  if (process.platform !== 'win32') {
     try {
-      // Tentar matar processos de forma mais suave
-      execSync('killall chromium chromium-browser chrome 2>/dev/null || true', { stdio: 'ignore' });
-      execSync('pkill -9 -f puppeteer 2>/dev/null || true', { stdio: 'ignore' });
-      console.log('✅ Processos do Chromium limpos');
-    } catch (killError) {
-      // Ignorar erros - pode não haver processos para matar
-      console.log('⚠️ Processos já limpos ou não existem');
+      const { execSync } = require('child_process');
+      console.log('🔧 Limpando processos do Chromium...');
+      try {
+        execSync('killall chromium chromium-browser chrome 2>/dev/null || true', { stdio: 'ignore' });
+        execSync('pkill -9 -f puppeteer 2>/dev/null || true', { stdio: 'ignore' });
+        console.log('✅ Processos do Chromium limpos');
+      } catch (killError) {
+        // Ignorar erros - pode não haver processos para matar
+        console.log('⚠️ Processos já limpos ou não existem');
+      }
+    } catch (err) {
+      console.log('⚠️ Erro ao limpar processos:', err.message);
     }
-  } catch (err) {
-    console.log('⚠️ Erro ao limpar processos:', err.message);
   }
 
   connectionStatus = 'disconnected';
@@ -1327,52 +1250,42 @@ app.post('/send-bulk', async (req, res) => {
 });
 
 // Iniciar servidor
-// Iniciar servidor Express
-const server = app.listen(BOT_PORT, '0.0.0.0', () => {
-  console.log(`✅ Bot API rodando na porta ${BOT_PORT}`);
-  console.log(`✅ Escutando em 0.0.0.0:${BOT_PORT} (acessível de qualquer interface)`);
+// Iniciar servidor Express (LOCAL - apenas localhost)
+const server = app.listen(BOT_PORT, '127.0.0.1', () => {
+  console.log('═══════════════════════════════════════════════════════');
+  console.log('✅ Bot API rodando em ambiente LOCAL');
+  console.log('═══════════════════════════════════════════════════════');
+  console.log(`✅ Servidor escutando em http://localhost:${BOT_PORT}`);
   console.log(`📋 Endpoints disponíveis:`);
-  console.log(`  GET  /status - Status do bot`);
-  console.log(`  POST /start - Iniciar bot`);
-  console.log(`  POST /stop - Parar bot`);
-  console.log(`  GET  /qr - Obter QR Code`);
-  console.log(`  POST /send - Enviar mensagem`);
-  console.log(`  POST /send-bulk - Enviar mensagem em massa`);
+  console.log(`  GET  http://localhost:${BOT_PORT}/status - Status do bot`);
+  console.log(`  POST http://localhost:${BOT_PORT}/start - Iniciar bot`);
+  console.log(`  POST http://localhost:${BOT_PORT}/stop - Parar bot`);
+  console.log(`  GET  http://localhost:${BOT_PORT}/qr - Obter QR Code`);
+  console.log(`  POST http://localhost:${BOT_PORT}/send - Enviar mensagem`);
+  console.log(`  POST http://localhost:${BOT_PORT}/send-bulk - Enviar mensagem em massa`);
   console.log('');
-  
-  // Verificar se o servidor está realmente escutando
-  const address = server.address();
-  if (address) {
-    console.log(`✅ Servidor confirmado escutando em ${address.address}:${address.port}`);
-  } else {
-    console.error(`❌ ERRO: Servidor não está escutando!`);
-  }
-  console.log('🔧 Variáveis de ambiente:');
+  console.log('🔧 Configurações:');
   console.log(`  BOT_PORT: ${BOT_PORT}`);
   console.log(`  DJANGO_API_URL: ${DJANGO_API_URL}`);
   console.log(`  SESSION_NAME: ${SESSION_NAME}`);
-  const chromeExists = CHROMIUM_PATH ? fs.existsSync(CHROMIUM_PATH) : false;
-  console.log(`  CHROMIUM_PATH (fixo): ${CHROMIUM_PATH || 'não definido'}`);
-  console.log(`  Chromium existe: ${chromeExists ? 'sim' : 'não'}`);
+  console.log(`  CHROMIUM_PATH: ${CHROMIUM_PATH || 'não definido (Puppeteer usará padrão)'}`);
+  console.log(`  HEADLESS: ${process.env.HEADLESS !== 'false' ? 'true' : 'false'}`);
   console.log('');
   console.log('🚀 Iniciando bot automaticamente...');
+  console.log('');
   
   // Iniciar bot automaticamente quando o servidor iniciar
-  // Aguardar mais tempo para garantir que tudo está pronto
   setTimeout(() => {
-    console.log('⏳ Aguardando 5 segundos antes de iniciar WPPConnect...');
-    console.log('⏳ Isso garante que todas as dependências estão carregadas');
+    console.log('⏳ Aguardando 3 segundos antes de iniciar WPPConnect...');
     
     initializeWhatsApp().catch((err) => {
-      console.error('❌ Erro ao inicializar bot automaticamente:', err);
-      console.error('❌ Stack trace:', err.stack);
-      console.error('❌ Tipo do erro:', err.constructor.name);
+      console.error('❌ Erro ao inicializar bot automaticamente:', err.message);
       botState.status = 'error';
       botState.error = err.message || 'Erro desconhecido ao inicializar bot';
       connectionStatus = 'error';
       console.error('❌ Bot não iniciou automaticamente. Use POST /start para tentar novamente.');
     });
-  }, 5000);
+  }, 3000);
 });
 
 // Tratamento de erros do servidor
