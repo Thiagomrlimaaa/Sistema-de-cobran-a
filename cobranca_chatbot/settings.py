@@ -32,7 +32,23 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-secret-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split() if not DEBUG else ["*"]
+# Configurar ALLOWED_HOSTS
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    # Em produção, ler de variável de ambiente
+    allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS", "")
+    if allowed_hosts_env:
+        ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split() if host.strip()]
+    else:
+        # Se não configurado e estiver no Render, aceitar qualquer domínio .onrender.com
+        # O Render define RENDER_EXTERNAL_HOSTNAME automaticamente
+        render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
+        if render_host:
+            ALLOWED_HOSTS = [render_host]
+        else:
+            # Fallback: aceitar qualquer domínio (menos seguro, mas funciona)
+            ALLOWED_HOSTS = ["*"]
 
 # CSRF Trusted Origins (necessário para Fly.io)
 CSRF_TRUSTED_ORIGINS = []
