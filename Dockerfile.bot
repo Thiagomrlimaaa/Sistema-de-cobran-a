@@ -1,16 +1,15 @@
 FROM node:18-slim
 
-# Evita perguntas interativas
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instala dependências do Chromium
+# Instalar Chromium real (chromium-browser) + dependências obrigatórias
 RUN apt-get update && apt-get install -y \
-    chromium \
-    chromium-driver \
+    chromium-browser \
     fonts-liberation \
     libnss3 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
+    libx11-6 \
     libx11-xcb1 \
     libxcomposite1 \
     libxdamage1 \
@@ -18,41 +17,23 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxfixes3 \
     libgbm1 \
+    libxkbcommon0 \
+    libu2f-udev \
+    libxshmfence1 \
     libasound2 \
     libcups2 \
-    libxshmfence1 \
     curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# PASSO 3: Desativar sandbox do sistema (OBRIGATÓRIO NO KOYEB)
-# Criar diretório de configuração do Chromium
+# Forçar Chromium sem sandbox e sem software rasterizer (OBRIGATÓRIO NO KOYEB)
 RUN mkdir -p /etc/chromium.d && \
-    echo 'CHROMIUM_FLAGS="--no-sandbox"' > /etc/chromium.d/no-sandbox.conf && \
+    echo 'CHROMIUM_FLAGS="--no-sandbox --disable-software-rasterizer"' > /etc/chromium.d/no-sandbox.conf && \
     echo "✅ Sandbox do sistema desativado em /etc/chromium.d/no-sandbox.conf"
 
-# Encontrar o binário real do Chromium e garantir permissões
-RUN CHROMIUM_REAL=$(find /usr -name chromium -type f -executable -size +1M 2>/dev/null | head -1) && \
-    if [ -n "$CHROMIUM_REAL" ]; then \
-        echo "✅ Chromium binário encontrado em: $CHROMIUM_REAL"; \
-        chmod +x "$CHROMIUM_REAL" && \
-        echo "✅ Permissões de execução garantidas para: $CHROMIUM_REAL"; \
-        echo "export CHROMIUM_REAL_PATH=$CHROMIUM_REAL" >> /etc/profile; \
-    else \
-        echo "⚠️ Usando /usr/bin/chromium como fallback"; \
-        if [ -f "/usr/bin/chromium" ]; then \
-            chmod +x /usr/bin/chromium; \
-        fi; \
-        echo "export CHROMIUM_REAL_PATH=/usr/bin/chromium" >> /etc/profile; \
-    fi && \
-    # Garantir permissões também para /usr/lib/chromium/chromium (caminho comum)
-    if [ -f "/usr/lib/chromium/chromium" ]; then \
-        chmod +x /usr/lib/chromium/chromium && \
-        echo "✅ Permissões garantidas para /usr/lib/chromium/chromium"; \
-    fi
-
-# Variáveis do Puppeteer (serão sobrescritas pelo código se encontrar binário real)
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/lib/chromium/chromium
-ENV CHROMIUM_PATH=/usr/lib/chromium/chromium
+# Exporta caminho real do Chromium
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app

@@ -468,6 +468,7 @@ async function initializeWhatsApp() {
   return wppconnect
     .create({
       session: SESSION_NAME,
+      useChrome: true, // ESSENCIAL - Força WPPConnect a usar Chrome/Chromium do sistema
       headless: true, // Headless no nível do WPPConnect
       userDataDir: userDataDir, // Diretório único para dados do navegador
       disableWelcome: true, // Desabilitar mensagem de boas-vindas
@@ -482,7 +483,7 @@ async function initializeWhatsApp() {
       // Todas as flags DEVEM estar em puppeteerOptions.args
       puppeteerOptions: {
         headless: 'new', // Novo modo headless (obrigatório)
-        executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || '/usr/bin/chromium',
+        executablePath: process.env.CHROMIUM_PATH, // CORRETO: usar apenas variável de ambiente
         args: [
           // Flags OBRIGATÓRIAS para Render/Koyeb (sem essas, o container mata o processo)
           '--no-sandbox', // ESSENCIAL - Render/Koyeb não permitem sandbox
@@ -495,6 +496,7 @@ async function initializeWhatsApp() {
           '--no-first-run', // Evita primeira execução
           '--no-zygote', // ESSENCIAL - Desabilita zygote (necessário com single-process)
           '--single-process', // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
+          '--disable-software-rasterizer', // ESSENCIAL - Evita crash no Debian slim
           '--ignore-certificate-errors', // Ignora erros de certificado
           '--ignore-ssl-errors' // Ignora erros SSL
         ],
