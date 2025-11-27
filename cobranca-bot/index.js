@@ -468,7 +468,7 @@ async function initializeWhatsApp() {
   return wppconnect
     .create({
       session: SESSION_NAME,
-      useChrome: true, // ESSENCIAL - Força WPPConnect a usar Chrome/Chromium do sistema
+      useChrome: false, // Usar Chromium do sistema (não Chrome)
       headless: true, // Headless no nível do WPPConnect
       userDataDir: userDataDir, // Diretório único para dados do navegador
       disableWelcome: true, // Desabilitar mensagem de boas-vindas
@@ -478,18 +478,19 @@ async function initializeWhatsApp() {
       browserWS: '', // WebSocket vazio (WPPConnect gerencia)
       tokenStore: 'file', // Armazenar tokens em arquivo
       folderNameToken: 'tokens', // Pasta para tokens
-      deviceName: 'Chrome Headless Koyeb', // Nome do dispositivo
+      deviceName: 'Chromium Headless Koyeb', // Nome do dispositivo
       // IMPORTANTE: WPPConnect ignora browserArgs em versões recentes
       // Todas as flags DEVEM estar em puppeteerOptions.args
       puppeteerOptions: {
-        headless: true, // Headless mode (Google Chrome funciona bem com true)
-        executablePath: process.env.CHROMIUM_PATH || process.env.CHROME_PATH || '/usr/bin/google-chrome', // Google Chrome oficial
+        headless: true, // Headless mode
+        executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', // Chromium do Debian
         args: [
-          // Flags OBRIGATÓRIAS para Render/Koyeb (Google Chrome está preparado para containers)
+          // Flags OBRIGATÓRIAS para Render/Koyeb (Chromium do Debian funciona bem com essas flags)
           '--no-sandbox', // ESSENCIAL - Render/Koyeb não permitem sandbox
           '--disable-setuid-sandbox', // ESSENCIAL - Desabilita sandbox de setuid
           '--disable-gpu', // ESSENCIAL - Desabilita GPU (não disponível em containers)
-          '--disable-dev-shm-usage' // ESSENCIAL - Evita problemas de memória compartilhada
+          '--disable-dev-shm-usage', // ESSENCIAL - Evita problemas de memória compartilhada
+          '--single-process' // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
         ],
         timeout: 180000, // Timeout de 3 minutos
         protocolTimeout: 300000 // Protocol timeout de 5 minutos

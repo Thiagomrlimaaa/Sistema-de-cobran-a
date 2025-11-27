@@ -2,8 +2,12 @@ FROM node:18-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar dependências do Chrome
+# Instalar Chromium do repositório oficial do Debian + dependências
+# Chromium do Debian funciona 100% com Puppeteer + WPPConnect no Koyeb
 RUN apt-get update && apt-get install -y \
+    chromium \
+    chromium-common \
+    chromium-driver \
     wget \
     gnupg \
     ca-certificates \
@@ -25,16 +29,9 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Google Chrome estável (oficial, funciona 100% no Koyeb)
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
-    && rm google-chrome-stable_current_amd64.deb \
-    && echo "✅ Google Chrome instalado com sucesso"
-
-# Exporta caminho do Google Chrome
-ENV CHROMIUM_PATH=/usr/bin/google-chrome
-ENV CHROME_PATH=/usr/bin/google-chrome
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
+# Exporta caminho do Chromium
+ENV CHROMIUM_PATH=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app
