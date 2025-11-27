@@ -414,7 +414,8 @@ async function initializeWhatsApp() {
       puppeteerOptions: {
         headless: true,
         // Usar Chrome encontrado (do Puppeteer ou sistema)
-        executablePath: CHROMIUM_PATH || undefined, // undefined = Puppeteer usa o padrão
+        // Se CHROMIUM_PATH estiver definido, usar ele; senão deixar undefined para Puppeteer usar o padrão
+        executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
