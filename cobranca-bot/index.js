@@ -430,6 +430,15 @@ async function initializeWhatsApp() {
   if (CHROMIUM_PATH) {
     if (fs.existsSync(CHROMIUM_PATH)) {
       console.log(`✅ Chromium encontrado e verificado em: ${CHROMIUM_PATH}`);
+      
+      // PASSO 2: Garantir permissões de execução do Chromium (OBRIGATÓRIO)
+      try {
+        fs.chmodSync(CHROMIUM_PATH, 0o755);
+        console.log(`✅ Permissões de execução garantidas para: ${CHROMIUM_PATH}`);
+      } catch (chmodErr) {
+        console.error(`❌ Erro ao tornar Chromium executável: ${chmodErr.message}`);
+        console.error('⚠️ Continuando mesmo assim...');
+      }
     } else {
       console.error(`❌ Chromium não encontrado em: ${CHROMIUM_PATH}`);
       console.error('❌ Tentando continuar com o padrão do Puppeteer...');
@@ -459,96 +468,38 @@ async function initializeWhatsApp() {
   return wppconnect
     .create({
       session: SESSION_NAME,
+      headless: true, // Headless no nível do WPPConnect
       userDataDir: userDataDir, // Diretório único para dados do navegador
       disableWelcome: true, // Desabilitar mensagem de boas-vindas
       updatesLog: true, // Habilitar logs de atualizações
       waitForLogin: false, // Não esperar login automático - forçar QR Code
       autoClose: 60000, // Fechar automaticamente após 60 segundos se não conectar
-      browserArgs: [
-        // Flags OBRIGATÓRIAS para Render/Koyeb (sem essas, o container mata o processo)
-        '--no-sandbox', // ESSENCIAL - Render/Koyeb não permitem sandbox
-        '--disable-setuid-sandbox', // ESSENCIAL - Desabilita sandbox de setuid
-        '--disable-dev-shm-usage', // ESSENCIAL - Evita problemas de memória compartilhada
-        '--single-process', // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
-        '--no-zygote', // ESSENCIAL - Desabilita zygote (necessário com single-process)
-        '--disable-gpu', // ESSENCIAL - Desabilita GPU (não disponível em containers)
-        '--disable-software-rasterizer', // ESSENCIAL - Desabilita rasterização por software
-        '--disable-dev-tools', // ESSENCIAL - Desabilita DevTools (evita problemas de WebSocket)
-        '--no-first-run', // Evita primeira execução
-        '--disable-accelerated-2d-canvas', // Desabilita aceleração 2D
-        '--disable-web-security', // Desabilita segurança web (para desenvolvimento)
-        '--disable-features=VizDisplayCompositor', // Desabilita compositor de display
-        '--remote-debugging-port=0', // Porta aleatória para DevTools
-        '--disable-blink-features=AutomationControlled', // Desabilita detecção de automação
-        '--disable-extensions',
-        '--disable-background-networking',
-        '--disable-background-timer-throttling',
-        '--disable-renderer-backgrounding',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-breakpad',
-        '--disable-component-update',
-        '--disable-domain-reliability',
-        '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection',
-        '--disable-sync',
-        '--metrics-recording-only',
-        '--mute-audio',
-        '--no-default-browser-check',
-        '--no-pings',
-        '--password-store=basic',
-        '--use-mock-keychain',
-        '--hide-scrollbars',
-        '--disable-logging',
-        '--disable-notifications'
-      ],
+      browserWS: '', // WebSocket vazio (WPPConnect gerencia)
+      tokenStore: 'file', // Armazenar tokens em arquivo
+      folderNameToken: 'tokens', // Pasta para tokens
+      deviceName: 'Chrome Headless Koyeb', // Nome do dispositivo
+      // IMPORTANTE: WPPConnect ignora browserArgs em versões recentes
+      // Todas as flags DEVEM estar em puppeteerOptions.args
       puppeteerOptions: {
-        headless: "new", // Usar novo modo headless (recomendado pelo Puppeteer)
-        // Usar o caminho do Chromium detectado (ou variável de ambiente)
-        executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+        headless: 'new', // Novo modo headless (obrigatório)
+        executablePath: CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || '/usr/bin/chromium',
         args: [
-          // Flags OBRIGATÓRIAS para Render/Koyeb (duplicadas aqui para garantir)
-          '--no-sandbox', // ESSENCIAL
-          '--disable-setuid-sandbox', // ESSENCIAL
-          '--disable-dev-shm-usage', // ESSENCIAL
-          '--single-process', // ESSENCIAL
-          '--no-zygote', // ESSENCIAL
-          '--disable-gpu', // ESSENCIAL
-          '--disable-software-rasterizer', // ESSENCIAL
-          '--disable-dev-tools', // ESSENCIAL - Evita problemas de WebSocket
-          '--no-first-run',
-          '--disable-accelerated-2d-canvas',
-          '--disable-extensions',
-          '--disable-background-networking',
-          '--disable-background-timer-throttling',
-          '--disable-renderer-backgrounding',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-breakpad',
-          '--disable-component-update',
-          '--disable-domain-reliability',
-          '--disable-features=TranslateUI',
-          '--disable-ipc-flooding-protection',
-          '--disable-sync',
-          '--metrics-recording-only',
-          '--mute-audio',
-          '--no-default-browser-check',
-          '--no-pings',
-          '--password-store=basic',
-          '--use-mock-keychain',
-          '--hide-scrollbars',
-          '--disable-logging',
-          '--disable-notifications',
-          // Flags adicionais para Koyeb/containers
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--remote-debugging-port=0', // Usar porta aleatória para DevTools
-          '--disable-blink-features=AutomationControlled'
+          // Flags OBRIGATÓRIAS para Render/Koyeb (sem essas, o container mata o processo)
+          '--no-sandbox', // ESSENCIAL - Render/Koyeb não permitem sandbox
+          '--disable-setuid-sandbox', // ESSENCIAL - Desabilita sandbox de setuid
+          '--disable-gpu', // ESSENCIAL - Desabilita GPU (não disponível em containers)
+          '--disable-dev-shm-usage', // ESSENCIAL - Evita problemas de memória compartilhada
+          '--disable-extensions', // Desabilita extensões
+          '--disable-dev-tools', // ESSENCIAL - Desabilita DevTools (evita problemas de WebSocket)
+          '--disable-default-apps', // Desabilita apps padrão
+          '--no-first-run', // Evita primeira execução
+          '--no-zygote', // ESSENCIAL - Desabilita zygote (necessário com single-process)
+          '--single-process', // ESSENCIAL - Roda em processo único (obrigatório no Koyeb/Render)
+          '--ignore-certificate-errors', // Ignora erros de certificado
+          '--ignore-ssl-errors' // Ignora erros SSL
         ],
-        ignoreDefaultArgs: ['--disable-extensions'],
-        timeout: 180000, // Aumentar timeout para 3 minutos
-        protocolTimeout: 300000, // Aumentar protocolTimeout para 5 minutos
-        // Adicionar opções para melhorar estabilidade
-        ignoreHTTPSErrors: true,
-        defaultViewport: { width: 1280, height: 720 }
+        timeout: 180000, // Timeout de 3 minutos
+        protocolTimeout: 300000 // Protocol timeout de 5 minutos
       },
       catchQR: (base64Qr, asciiQR, attempts, urlCode) => {
         console.log('═══════════════════════════════════════════════════════');

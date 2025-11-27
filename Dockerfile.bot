@@ -24,6 +24,12 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# PASSO 3: Desativar sandbox do sistema (OBRIGATÓRIO NO KOYEB)
+# Criar diretório de configuração do Chromium
+RUN mkdir -p /etc/chromium.d && \
+    echo 'CHROMIUM_FLAGS="--no-sandbox"' > /etc/chromium.d/no-sandbox.conf && \
+    echo "✅ Sandbox do sistema desativado em /etc/chromium.d/no-sandbox.conf"
+
 # Encontrar o binário real do Chromium e garantir permissões
 RUN CHROMIUM_REAL=$(find /usr -name chromium -type f -executable -size +1M 2>/dev/null | head -1) && \
     if [ -n "$CHROMIUM_REAL" ]; then \
