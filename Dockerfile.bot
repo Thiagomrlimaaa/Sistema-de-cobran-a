@@ -2,10 +2,11 @@ FROM node:18-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar ungoogled-chromium (compatível com containers slim) + dependências obrigatórias
-# ungoogled-chromium funciona 100% no Puppeteer + Debian slim (Koyeb/Render/Fly.io)
+# Instalar dependências do Chrome
 RUN apt-get update && apt-get install -y \
-    ungoogled-chromium \
+    wget \
+    gnupg \
+    ca-certificates \
     libnss3 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
@@ -21,18 +22,19 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     libcups2 \
     libxshmfence1 \
-    wget \
-    ca-certificates \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Forçar Chromium sem sandbox e sem software rasterizer (OBRIGATÓRIO NO KOYEB)
-RUN mkdir -p /etc/chromium.d && \
-    echo 'CHROMIUM_FLAGS="--no-sandbox --disable-software-rasterizer"' > /etc/chromium.d/no-sandbox.conf && \
-    echo "✅ Sandbox do sistema desativado em /etc/chromium.d/no-sandbox.conf"
+# Instalar Google Chrome estável (oficial, funciona 100% no Koyeb)
+RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
+    && rm google-chrome-stable_current_amd64.deb \
+    && echo "✅ Google Chrome instalado com sucesso"
 
-# Exporta caminho do ungoogled-chromium
-ENV CHROMIUM_PATH=/usr/bin/ungoogled-chromium
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/ungoogled-chromium
+# Exporta caminho do Google Chrome
+ENV CHROMIUM_PATH=/usr/bin/google-chrome
+ENV CHROME_PATH=/usr/bin/google-chrome
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app
