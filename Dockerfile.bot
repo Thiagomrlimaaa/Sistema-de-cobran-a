@@ -1,37 +1,16 @@
-FROM node:18-slim
+FROM node:20-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar Chromium do repositório oficial do Debian + dependências
-# Chromium do Debian funciona 100% com Puppeteer + WPPConnect no Koyeb
+# Instalar Chromium do repositório oficial do Debian
 RUN apt-get update && apt-get install -y \
     chromium \
-    chromium-common \
     chromium-driver \
-    wget \
-    gnupg \
-    ca-certificates \
-    libnss3 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libxext6 \
-    libxfixes3 \
-    libgbm1 \
-    libxkbcommon0 \
-    libasound2 \
-    libcups2 \
-    libxshmfence1 \
-    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Exporta caminho do Chromium (binário real geralmente está em /usr/lib/chromium/chromium)
-ENV CHROMIUM_PATH=/usr/lib/chromium/chromium
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/lib/chromium/chromium
+# Exporta caminho do Chromium
+ENV CHROMIUM_PATH=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app

@@ -483,7 +483,7 @@ async function initializeWhatsApp() {
       // Todas as flags DEVEM estar em puppeteerOptions.args
       puppeteerOptions: {
         headless: 'new', // Novo modo headless
-        executablePath: process.env.CHROMIUM_PATH || '/usr/lib/chromium/chromium', // Caminho correto do Chromium
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH || '/usr/bin/chromium', // Caminho do Chromium
         userDataDir: userDataDir, // Diretório de dados do navegador
         args: [
           // Flags OBRIGATÓRIAS para Render/Koyeb (sem essas, Chromium fecha imediatamente)
